@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Planon — Geographic Location Management</title>
+
+<!-- Fabric design system tokens -->
+<link rel="stylesheet" href="Fabric-theme.css" />
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+  :root { --fab-color-background-page-branded: #F1F4F9; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--fab-font-family-primary);
+    background: var(--fab-color-background-page-branded);
+    color: var(--fab-color-text-default);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ─── Top bar ─── */
+  .topbar {
+    background: var(--fab-color-background-elevation-1);
+    border-bottom: 1px solid var(--fab-color-divider-default);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: sticky; top: 0; z-index: 1000;
+  }
+  .topbar-topline {
+    height: 4px;
+    background: var(--fab-color-background-action-primary-default);
+    flex-shrink: 0;
+    width: 100%;
+  }
+  .topbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--fab-spacing-xs) var(--fab-spacing-m);
+    min-height: 48px;
+  }
+  .topbar-logo {
+    display: flex; align-items: center; gap: var(--fab-spacing-m);
+    color: var(--fab-color-text-default);
+    padding-right: var(--fab-spacing-xxl);
+  }
+  .topbar-logo img { display: block; }
+  .topbar-right { display: flex; align-items: center; gap: var(--fab-spacing-m); color: var(--fab-color-text-subdued); font-size: 12px; }
+  .topbar-badge {
+    background: var(--fab-color-status-warning-alt-default);
+    color: var(--fab-color-text-inversed);
+    padding: 2px var(--fab-spacing-xs);
+    border-radius: var(--fab-border-radius-rounded);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Breadcrumb ─── */
+  .breadcrumb {
+    padding: 10px var(--fab-spacing-l);
+    display: flex; align-items: center; gap: var(--fab-spacing-xxs);
+    font-size: 14px; line-height: 22px; letter-spacing: 0.35px;
+    color: var(--fab-color-text-default);
+    position: sticky; top: var(--topbar-height, 52px); z-index: 900;
+    background: var(--fab-color-background-page-branded);
+  
+  }
+  .breadcrumb a { color: var(--fab-color-text-default); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; color: var(--fab-color-text-default); }
+  .breadcrumb-sep { color: var(--fab-color-text-default); }
+  .breadcrumb-current { color: var(--fab-color-text-default); font-weight: 400; }
+
+  /* ─── Page layout ─── */
+  .page { max-width: 1240px; margin: 0 auto; padding: var(--fab-spacing-l) 20px 60px; }
+
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 20px; gap: var(--fab-spacing-m);
+  }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--fab-color-text-brand); line-height: 1.2; }
+  .page-subtitle { font-size: 13px; color: var(--fab-color-text-subdued); margin-top: var(--fab-spacing-xxs); }
+  .page-actions { display: flex; gap: var(--fab-spacing-xs); flex-shrink: 0; }
+
+  /* ─── Tabs ─── */
+  .tabs {
+    display: flex; gap: 0; border-bottom: var(--fab-border-width-xs) solid var(--fab-color-divider-default);
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    padding: 10px 20px; font-size: 13px; font-weight: 500;
+    color: var(--fab-color-text-subdued); background: none; border: none;
+    cursor: pointer; border-bottom: var(--fab-border-width-xs) solid transparent;
+    margin-bottom: -2px; transition: all var(--fab-transition-duration-action-states);
+  }
+  .tab-btn:hover { color: var(--fab-color-text-brand); background: var(--fab-color-background-action-secondary-hover); }
+  .tab-btn.active { color: var(--fab-color-text-brand); border-bottom-color: var(--fab-color-border-brand); font-weight: 600; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── Card ─── */
+  .card {
+    background: var(--fab-color-background-elevation-1);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    border-radius: var(--fab-border-radius-card-l);
+    box-shadow: var(--fab-shadow-elevation-1);
+  }
+  .card-header {
+    background: var(--fab-color-background-elevation-1);
+    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    padding: 12px var(--fab-spacing-l);
+    display: flex; align-items: center; gap: var(--fab-spacing-s);
+    color: var(--fab-color-text-default);
+    border-radius: var(--fab-border-radius-card-l) var(--fab-border-radius-card-l) 0 0;
+  }
+  .card-header-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.04px;
+    color: var(--fab-color-text-default);
+  }
+  .card-header-badge {
+    margin-left: auto;
+    background: var(--fab-color-background-page-subdued);
+    color: var(--fab-color-text-subdued);
+    font-size: 11px;
+    padding: 2px var(--fab-spacing-xs);
+    border-radius: var(--fab-border-radius-rounded);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+  }
+  .card-body { padding: var(--fab-spacing-l); }
+
+  /* ─── Main 2-col layout ─── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* ─── Form elements ─── */
+  .field-group {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 2), 1fr);
+    gap: 14px var(--fab-spacing-m);
+    margin-bottom: 20px;
+  }
+  .field-group.cols-1 { --cols: 1; }
+  .field-group.cols-3 { --cols: 3; }
+  .field-group.cols-4 { --cols: 4; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+
+  .field-label {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+    color: var(--fab-color-text-default);
+    letter-spacing: .042px;
+    text-transform: none;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .field-label .required { color: var(--fab-color-status-warning-alt-default); }
+  .field-label .tooltip-icon {
+    color: var(--fab-color-icon-disabled);
+    cursor: help; font-size: 12px;
+    position: relative;
+  }
+  .field-label .info-badge {
+    background: var(--fab-color-background-info);
+    color: var(--fab-color-status-info-default);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: var(--fab-border-radius-chip-m);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  input[type="text"], input[type="number"], select, textarea {
+    width: 100%;
+    padding: 5px var(--fab-spacing-s);
+    border: 1px solid var(--fab-color-border-input-default);
+    border-radius: var(--fab-border-radius-input-m);
+    font-size: 14px;
+    line-height: 22px;
+    font-family: var(--fab-font-family-primary);
+    color: var(--fab-color-text-default);
+    background: var(--fab-color-background-input-default);
+    transition: border-color var(--fab-transition-duration-action-states), box-shadow var(--fab-transition-duration-action-states);
+    outline: none;
+    appearance: none;
+  }
+  input::placeholder, textarea::placeholder {
+    font-style: italic;
+    color: var(--fab-color-text-subdued);
+  }
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    border-color: var(--fab-color-border-input-focus);
+    box-shadow: 0 0 0 var(--fab-outline-width-input-focus) var(--fab-color-outline-focus-default);
+  }
+  input:read-only, input.readonly {
+    background: var(--fab-color-background-input-disabled);
+    color: var(--fab-color-text-subdued);
+    cursor: default;
+  }
+  input.validated {
+    background: var(--fab-color-background-success);
+    border-color: var(--fab-color-border-success);
+    color: var(--fab-color-text-default);
+  }
+  input.manual-override {
+    background: var(--fab-color-background-warning);
+    border-color: var(--fab-color-border-warning);
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7A99' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+
+  .field-hint { font-size: 12px; line-height: 18px; letter-spacing: .042px; color: var(--fab-color-text-default); margin-top: 0; }
+  .field-status {
+    font-size: 11px;
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .field-status.success { color: var(--fab-color-status-success-default); }
+  .field-status.warning { color: var(--fab-color-status-warning-alt-default); }
+  .field-status.error   { color: var(--fab-color-status-danger-default); }
+
+  /* ─── Search Bar ─── */
+  .search-wrapper {
+    position: relative;
+    
+    display: flex;
+    align-items: center;
+    gap: var(--fab-spacing-xs);
+  }
+  .search-input {
+    width: 100%;
+    padding: 10px 120px 10px 14px;
+    border: var(--fab-border-width-xs) solid var(--fab-color-border-input-default);
+    border-radius: var(--fab-border-radius-input-m);
+    font-size: 14px;
+    font-family: var(--fab-font-family-primary);
+    color: var(--fab-color-text-default);
+    background: var(--fab-color-background-input-default);
+    transition: all var(--fab-transition-duration-action-states);
+    outline: none;
+  }
+  .search-input:focus-visible {
+    border-color: var(--fab-color-border-input-focus);
+    box-shadow: 0 0 0 var(--fab-outline-width-input-focus) var(--fab-color-outline-focus-default);
+  }
+  .search-btn {
+    position: absolute; right: 4px; top: 4px; bottom: 4px;
+    padding: 0 var(--fab-spacing-m);
+    background: var(--fab-color-background-action-primary-default);
+    color: var(--fab-color-text-inversed);
+    border: none;
+    border-radius: var(--fab-border-radius-action-m);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--fab-transition-duration-action-states);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .search-btn:hover { background: var(--fab-color-background-action-primary-hover); }
+  .search-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ─── Autocomplete dropdown ─── */
+  .autocomplete-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--fab-color-background-elevation-1);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    border-radius: var(--fab-border-radius-overlay-m);
+    box-shadow: var(--fab-shadow-elevation-8);
+    z-index: 500;
+    overflow: hidden;
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+  }
+  .autocomplete-dropdown.open { display: block; }
+  .autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    display: flex; align-items: flex-start; gap: 10px;
+    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-background-page-subdued);
+    transition: background var(--fab-transition-duration-action-states);
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--fab-color-background-action-secondary-hover); }
+  .autocomplete-item-icon { color: var(--fab-color-icon-brand); margin-top: 1px; flex-shrink: 0; }
+  .autocomplete-item-main { font-size: 13px; color: var(--fab-color-text-default); font-weight: 500; }
+  .autocomplete-item-sub { font-size: 11.5px; color: var(--fab-color-text-subdued); margin-top: 1px; }
+  .autocomplete-loading {
+    padding: 12px 14px; text-align: center;
+    color: var(--fab-color-text-subdued); font-size: 12px;
+    display: flex; align-items: center; justify-content: center; gap: var(--fab-spacing-xs);
+  }
+
+  /* ─── Section title ─── */
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.04px;
+    color: var(--fab-color-text-default);
+    text-transform: none;
+    padding: var(--fab-spacing-s) 0 var(--fab-spacing-s);
+    margin-bottom: var(--fab-spacing-s);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+
+  /* ─── Buttons ─── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--fab-spacing-xs);
+    padding: 5px var(--fab-spacing-m);
+    border-radius: var(--fab-border-radius-action-m);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+    letter-spacing: 0.35px;
+    font-family: var(--fab-font-family-primary);
+    cursor: pointer;
+    border: var(--fab-border-width-action-default) solid transparent;
+    transition: background var(--fab-transition-duration-action-states), box-shadow var(--fab-transition-duration-action-states), border-color var(--fab-transition-duration-action-states);
+    white-space: nowrap;
+    position: relative;
+    text-decoration: none;
+  }
+  /* Primary */
+  .btn-primary { background: var(--fab-color-background-action-primary-default); color: var(--fab-color-text-inversed); border-color: transparent; }
+  .btn-primary:hover { background: var(--fab-color-background-action-primary-hover); box-shadow: var(--fab-shadow-elevation-2); }
+  .btn-primary:active { background: var(--fab-color-background-action-primary-pressed); box-shadow: none; }
+  .btn-primary:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
+  /* Secondary */
+  .btn-secondary { background: var(--fab-color-background-action-secondary-default); color: var(--fab-color-text-brand); border-color: var(--fab-color-border-action-outline-default); }
+  .btn-secondary:hover { background: var(--fab-color-background-action-secondary-hover); box-shadow: var(--fab-shadow-elevation-2); }
+  .btn-secondary:active { background: var(--fab-color-background-action-secondary-pressed); box-shadow: none; }
+  .btn-secondary:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
+  /* Ghost = Tertiary outline (white bg, gray border) */
+  .btn-ghost { background: var(--fab-color-background-action-tertiary-outline-default); color: var(--fab-color-text-default); border-color: var(--fab-color-border-action-outline-tertiary); }
+  .btn-ghost:hover { background: var(--fab-color-background-action-tertiary-outline-hover); box-shadow: var(--fab-shadow-elevation-2); }
+  .btn-ghost:active { background: var(--fab-color-background-action-tertiary-outline-pressed); box-shadow: none; }
+  .btn-ghost:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
+  /* Danger */
+  .btn-danger { background: var(--fab-color-background-action-danger-default); color: var(--fab-color-text-inversed); border-color: transparent; }
+  .btn-danger:hover { background: var(--fab-color-background-action-danger-hover); box-shadow: var(--fab-shadow-elevation-2); }
+  .btn-danger:active { background: var(--fab-color-background-action-danger-pressed); box-shadow: none; }
+  .btn-danger:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
+  /* Warning / Success */
+  .btn-warning { background: var(--fab-color-status-warning-alt-default); color: var(--fab-color-text-inversed); border-color: transparent; }
+  .btn-success { background: var(--fab-color-status-success-default); color: var(--fab-color-text-inversed); border-color: transparent; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; line-height: 18px; }
+  .btn:disabled, .btn[disabled] { background: var(--fab-color-background-action-disabled); color: var(--fab-color-text-action-disabled); border-color: var(--fab-color-border-action-outline-disabled); cursor: not-allowed; box-shadow: none; pointer-events: none; }
+
+  /* ─── Coordinate panel ─── */
+  .coord-panel {
+    background: var(--fab-color-background-page-subdued);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    border-radius: var(--fab-border-radius-card-m);
+    padding: 14px var(--fab-spacing-m);
+    margin-bottom: 20px;
+  }
+  .coord-panel-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--fab-color-text-default);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .coord-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 10px; align-items: end;
+  }
+  .coord-status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px var(--fab-spacing-xs); border-radius: var(--fab-border-radius-rounded);
+    font-size: 11px; font-weight: 600;
+  }
+  .coord-status-badge.geocoded { background: var(--fab-color-background-success); color: var(--fab-color-status-success-default); }
+  .coord-status-badge.manual   { background: var(--fab-color-background-warning);  color: var(--fab-color-status-warning-alt-default); }
+  .coord-status-badge.none     { background: var(--fab-color-background-page-subdued); color: var(--fab-color-text-subdued); border: var(--fab-border-width-xxs) solid var(--fab-color-border-default); }
+
+  /* ─── Map panel ─── */
+  .map-card { overflow: hidden; border-radius: var(--fab-border-radius-card-l); }
+  .map-container {
+    height: 320px;
+    width: 100%;
+    position: relative;
+  }
+  #map { width: 100%; height: 100%; }
+
+  /* Scroll-to-zoom gate overlay */
+  .map-scroll-gate {
+    position: absolute;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0, 0, 0, 0.50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+    border-radius: 0;
+  }
+  .map-scroll-gate.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .map-scroll-gate-msg {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+    letter-spacing: 0.35px;
+    background: rgba(0,0,0,0.55);
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .map-toolbar {
+    padding: 10px 14px;
+    background: var(--fab-color-background-page-subdued);
+    border-top: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    display: flex; align-items: center; gap: var(--fab-spacing-xs);
+    flex-wrap: wrap;
+  }
+  .map-toolbar-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--fab-color-text-subdued); text-transform: uppercase; letter-spacing: .4px;
+    flex-shrink: 0;
+  }
+
+  .map-mode-btn {
+    padding: 4px 10px;
+    border-radius: var(--fab-border-radius-action-m);
+    font-size: 12px;
+    font-weight: 500;
+    border: var(--fab-border-width-action-default) solid var(--fab-color-border-action-outline-tertiary);
+    background: var(--fab-color-background-elevation-1);
+    color: var(--fab-color-text-default);
+    cursor: pointer; transition: all var(--fab-transition-duration-action-states);
+  }
+  .map-mode-btn.active { background: var(--fab-color-background-action-primary-default); color: var(--fab-color-text-inversed); border-color: var(--fab-color-background-action-primary-default); }
+  .map-mode-btn:hover:not(.active) { background: var(--fab-color-background-action-secondary-hover); color: var(--fab-color-text-brand); border-color: var(--fab-color-border-action-outline-default); }
+
+  .map-info-strip {
+    padding: var(--fab-spacing-xs) 14px;
+    font-size: 11.5px;
+    color: var(--fab-color-text-subdued);
+    background: var(--fab-color-background-elevation-1);
+    border-top: var(--fab-border-width-xxs) solid var(--fab-color-divider-thin);
+    display: flex; align-items: center; gap: 6px;
+    min-height: 32px;
+  }
+
+  /* ─── Toast notification ─── */
+  #toast-container {
+    position: fixed; bottom: var(--fab-spacing-l); right: var(--fab-spacing-l);
+    z-index: 9999; display: flex; flex-direction: column; gap: var(--fab-spacing-xs);
+  }
+  .toast {
+    padding: var(--fab-spacing-s) var(--fab-spacing-m);
+    border-radius: var(--fab-border-radius-message-m);
+    box-shadow: var(--fab-shadow-elevation-8);
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 260px; max-width: 380px;
+    animation: slideIn .25s ease;
+    transition: opacity .3s;
+  }
+  .toast.success { background: var(--fab-color-status-success-default);       color: var(--fab-color-text-inversed); }
+  .toast.warning { background: var(--fab-color-status-warning-alt-default);   color: var(--fab-color-text-inversed); }
+  .toast.error   { background: var(--fab-color-status-danger-default);        color: var(--fab-color-text-inversed); }
+  .toast.info    { background: var(--fab-color-background-action-primary-pressed); color: var(--fab-color-text-inversed); }
+  @keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ─── Field data model reference tab ─── */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--fab-spacing-m);
+  }
+  @media (max-width: 800px) { .model-grid { grid-template-columns: 1fr 1fr; } }
+
+  .model-card {
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    border-radius: var(--fab-border-radius-card-m);
+    overflow: hidden;
+    background: var(--fab-color-background-elevation-1);
+  }
+  .model-card-head {
+    background: var(--fab-color-background-action-primary-default);
+    color: var(--fab-color-text-inversed);
+    padding: var(--fab-spacing-xs) var(--fab-spacing-s);
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .model-card-body { padding: 10px var(--fab-spacing-s); }
+  .model-field-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-divider-thin);
+    gap: var(--fab-spacing-xs);
+  }
+  .model-field-row:last-child { border-bottom: none; }
+  .model-field-name { font-size: 12px; font-weight: 600; color: var(--fab-color-text-default); font-family: 'Consolas', monospace; }
+  .model-field-type {
+    font-size: 10px; padding: 1px 5px; border-radius: var(--fab-border-radius-chip-m);
+    font-weight: 700; text-transform: uppercase; flex-shrink: 0;
+  }
+  .type-str  { background: var(--fab-comp-chip-color-background-regular-blue);   color: var(--fab-comp-chip-color-foreground-regular-blue); }
+  .type-enum { background: var(--fab-comp-chip-color-background-regular-purple); color: var(--fab-comp-chip-color-foreground-regular-purple); }
+  .type-num  { background: var(--fab-comp-chip-color-background-regular-yellow); color: var(--fab-comp-chip-color-foreground-regular-yellow); }
+  .type-bool { background: var(--fab-comp-chip-color-background-regular-green);  color: var(--fab-comp-chip-color-foreground-regular-green); }
+  .type-ref  { background: var(--fab-comp-chip-color-background-regular-red);    color: var(--fab-comp-chip-color-foreground-regular-red); }
+  .model-field-desc { font-size: 11px; color: var(--fab-color-text-subdued); margin-top: 2px; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: var(--fab-border-radius-rounded);
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .2px;
+  }
+  .tag-new     { background: var(--fab-comp-chip-color-background-subtle-marine); color: var(--fab-comp-chip-color-foreground-subtle-marine); }
+  .tag-enhance { background: var(--fab-color-background-success); color: var(--fab-color-status-success-default); }
+  .tag-remove  { background: var(--fab-color-background-danger);  color: var(--fab-color-status-danger-default); }
+
+  /* ─── Status bar ─── */
+  .status-bar {
+    align-items: center; gap: var(--fab-spacing-xs);
+    padding: var(--fab-spacing-xs) 14px;
+    background: var(--fab-color-background-success);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-success);
+    border-radius: var(--fab-border-radius-message-m);
+    font-size: 12px; color: var(--fab-color-status-success-default);
+    font-weight: 500;
+    margin-top: var(--fab-spacing-m);
+    display: none;
+  }
+  .status-bar.visible { display: flex; }
+
+  /* ─── Map action panel (embedded in coords card) ─── */
+  .map-panel-state { display: none; }
+  .map-panel-state.active { display: block; }
+
+  .map-panel-idle {
+    padding: 14px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+  .map-panel-coord-val {
+    font-size: 14px; font-weight: 700; color: var(--fab-color-text-brand);
+    font-family: monospace; line-height: 1.3;
+  }
+  .map-panel-coord-lbl {
+    font-size: 10px; color: var(--fab-color-text-subdued); text-transform: uppercase; letter-spacing: .3px;
+  }
+
+  .map-panel-pending {
+    border-top: var(--fab-border-width-s) solid var(--fab-color-status-warning-alt-default);
+  }
+  .map-panel-pending-header {
+    background: var(--fab-color-background-warning);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: var(--fab-spacing-xs);
+    font-size: 12.5px; font-weight: 600; color: var(--fab-color-status-warning-alt-default);
+    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-status-warning-alt-default);
+  }
+  .map-panel-pending-body { padding: var(--fab-spacing-s) 14px; }
+  .map-panel-pending-coords {
+    display: grid; grid-template-columns: 1fr 1fr; gap: var(--fab-spacing-xs);
+    margin-bottom: var(--fab-spacing-s);
+  }
+  .map-panel-actions {
+    display: flex; gap: 7px; flex-wrap: wrap;
+  }
+
+  .map-panel-result-header {
+    background: var(--fab-color-background-info);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: var(--fab-spacing-xs);
+    font-size: 12.5px; font-weight: 600; color: var(--fab-color-text-brand);
+    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-border-info);
+  }
+  .map-panel-result-body { padding: var(--fab-spacing-s) 14px; }
+
+  .map-panel-loading {
+    padding: 20px 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; color: var(--fab-color-text-subdued); font-size: 13px;
+  }
+  .spin {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: var(--fab-color-text-inversed);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+  }
+  .spin.dark {
+    border: 2px solid var(--fab-color-border-default);
+    border-top-color: var(--fab-color-border-brand);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Disclaimer banner ─── */
+  .info-banner {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--fab-color-background-info);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-info);
+    border-radius: var(--fab-border-radius-message-m);
+    padding: var(--fab-spacing-s) 14px;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    color: var(--fab-color-text-brand);
+    line-height: 1.5;
+  }
+  .info-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ─── Search info popover ─── */
+  .search-info-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: var(--fab-border-radius-action-m);
+    border: none
+    background: var(--fab-color-background-action-tertiary-outline-default);
+    color: var(--fab-color-text-subdued);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: background var(--fab-transition-duration-action-states);
+    position: relative;
+  }
+  .search-info-btn:hover { background: var(--fab-color-background-action-tertiary-outline-hover); }
+  .search-info-btn:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
+  .search-info-popover {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    width: 300px;
+    background: var(--fab-color-background-elevation-1);
+    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+    border-radius: var(--fab-border-radius-card-m);
+    box-shadow: var(--fab-shadow-elevation-4);
+    padding: var(--fab-spacing-s) 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--fab-color-text-default);
+  }
+  .search-info-popover.open { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ─── Top Bar ─── -->
+<div class="topbar">
+  <div class="topbar-topline"></div>
+  <div class="topbar-container">
+    <div class="topbar-logo">
+      <img src="planon-light-logo.png" alt="Planon" style="height:28px;width:auto;display:block;" />
+    </div>
+    <div class="topbar-right">
+      <span>Supporting Data</span>
+      <span class="topbar-badge">⬡ Concept Preview</span>
+      <span>👤 Administrator</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Breadcrumb ─── -->
+<div class="breadcrumb">
+  <a href="#">Supporting Data</a>
+  <span class="breadcrumb-sep">/</span>
+  <a href="#">Countries &amp; Cities</a>
+  <span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Geographic Location — Amsterdam HQ</span>
+  <div class="page-actions" style="margin-left:auto">
+    <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+    <button class="btn btn-primary" onclick="saveRecord()">Save</button>
+  </div>
+</div>
+
+<!-- ─── Page ─── -->
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Geographic Location</div>
+      <div class="page-subtitle">Property: Amsterdam HQ &nbsp;·&nbsp; Business Object: Property &nbsp;·&nbsp; Module: Real Estate Management</div>
+    </div>
+  </div>
+
+  <!-- ─── Tabs ─── -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('entry')" id="tab-entry">Address Entry</button>
+    <button class="tab-btn" onclick="showTab('model')" id="tab-model">Global Field Model</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ TAB 1: Address Entry -->
+  <div class="tab-panel active" id="panel-entry">
+    <div class="main-grid">
+
+      <!-- LEFT: Search+Map & Coordinates -->
+      <div>
+        <!-- Combined Search + Map card -->
+        <div class="card" style="margin-bottom:18px;overflow:hidden">
+          <div class="card-header">
+            <span class="card-header-title">Address Search &amp; Autocomplete</span>
+            
+          </div>
+          <div class="card-body">
+            <div class="search-wrapper" id="search-wrapper">
+              <button class="search-info-btn" id="search-info-btn" type="button" aria-label="About address search" aria-expanded="false" onclick="toggleSearchInfo(this)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <circle cx="7" cy="7" r="6.25" stroke="currentColor" stroke-width="1.5"/>
+                  <rect x="6.25" y="6" width="1.5" height="5" rx="0.75" fill="currentColor"/>
+                  <circle cx="7" cy="3.75" r="0.875" fill="currentColor"/>
+                </svg>
+              </button>
+              <div style="position:relative;flex:1;min-width:0">
+              <input type="text" class="search-input" id="address-search"
+                placeholder="e.g.  Eiffel Tower, Paris  ·  1600 Pennsylvania Ave  ·  Schiphol Airport"
+                autocomplete="off"
+                oninput="handleSearchInput(this.value)"
+                onkeydown="handleSearchKey(event)" />
+              <button class="search-btn" id="search-btn" onclick="doSearch()">
+                <span id="search-btn-text">Search</span>
+              </button>
+              <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
+              </div>
+            </div>
+
+            <div id="validation-status" class="status-bar">
+              ✅ Address validated and geocoded via OpenStreetMap Nominatim
+            </div>
+          </div>
+          <div class="map-container" style="border-top:var(--fab-border-width-xxs) solid var(--fab-color-border-default)">
+            <div id="map"></div>
+            <div class="map-scroll-gate" id="map-scroll-gate">
+              <div class="map-scroll-gate-msg" id="map-scroll-gate-msg">Use <kbd style="font:inherit;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:4px;padding:1px 6px">⌘</kbd> + scroll to zoom</div>
+            </div>
+          </div>
+          <div class="map-info-strip" id="map-info-strip">
+            <span style="color:var(--planon-gray-300)">●</span> No location set — use address search or enter coordinates
+          </div>
+          <!-- Map pin states -->
+          <div id="map-action-panel" style="border-top: var(--fab-border-width-xxs) solid var(--fab-color-border-default);">
+
+              <!-- STATE: idle -->
+              <div class="map-panel-state active" id="map-panel-idle">
+                <div class="map-panel-idle">
+                  <div>
+                    <div class="map-panel-coord-lbl">Latitude</div>
+                    <div class="map-panel-coord-val" id="pin-lat-display">—</div>
+                  </div>
+                  <div>
+                    <div class="map-panel-coord-lbl">Longitude</div>
+                    <div class="map-panel-coord-val" id="pin-lng-display">—</div>
+                  </div>
+                </div>
+                <div style="padding:0 14px 10px;font-size:11.5px;color:var(--planon-gray-500)" id="address-lock-info">
+                  <span style="color:var(--planon-gray-300)">⬡</span> Address not validated
+                </div>
+              </div>
+
+              <!-- STATE: pending -->
+              <div class="map-panel-state" id="map-panel-pending">
+                <div class="map-panel-pending-header">
+                  <span style="font-size:16px">📌</span>
+                  <span>New pin position — not yet applied</span>
+                </div>
+                <div class="map-panel-pending-body">
+                  <div class="map-panel-pending-coords">
+                    <div>
+                      <div class="map-panel-coord-lbl">Latitude</div>
+                      <div class="map-panel-coord-val" id="pending-lat-display" style="color:var(--planon-orange)">—</div>
+                    </div>
+                    <div>
+                      <div class="map-panel-coord-lbl">Longitude</div>
+                      <div class="map-panel-coord-val" id="pending-lng-display" style="color:var(--planon-orange)">—</div>
+                    </div>
+                  </div>
+                  <div class="map-panel-actions">
+                    <button class="btn btn-primary btn-sm" onclick="startReverseFromPending()">Reverse Geocode &amp; Apply</button>
+                    <button class="btn btn-secondary btn-sm" onclick="commitCoordsOnly()">Coordinates Only</button>
+                    <button class="btn btn-ghost btn-sm" onclick="cancelPending()">Cancel</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- STATE: loading -->
+              <div class="map-panel-state" id="map-panel-loading">
+                <div class="map-panel-loading">
+                  <span class="spin dark"></span> Reverse geocoding…
+                </div>
+              </div>
+
+              <!-- STATE: result -->
+              <div class="map-panel-state" id="map-panel-result">
+                <div class="map-panel-result-header">
+                  <span style="font-size:16px">🔄</span>
+                  <span>Reverse geocode result</span>
+                  <span style="margin-left:auto;font-size:11px;font-weight:400;color:var(--planon-gray-500)">Review &amp; confirm</span>
+                </div>
+                <div class="map-panel-result-body">
+                  <div id="map-panel-result-content" style="font-size:12.5px;line-height:1.6;color:var(--planon-gray-700);margin-bottom:12px"></div>
+                  <div class="map-panel-actions">
+                    <button class="btn btn-success btn-sm" onclick="applyReverseResult()">Apply all fields</button>
+                    <button class="btn btn-ghost btn-sm" onclick="showMapPanelState('pending')">Back</button>
+                    <button class="btn btn-ghost btn-sm" onclick="cancelPending()">Cancel</button>
+                  </div>
+                </div>
+              </div>
+
+          </div>
+        </div>
+
+        <!-- Coordinates + Map Actions -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">Geospatial Coordinates</span>
+          </div>
+          <div class="card-body">
+            <div class="coord-panel">
+              <div class="coord-panel-title">
+                <span>WGS84 Decimal Degrees</span>
+                <span class="coord-status-badge none" id="coord-status-badge">⬤ Not set</span>
+              </div>
+              <div class="coord-row">
+                <div class="field">
+                  <label class="field-label">Latitude</label>
+                  <input type="number" id="f-lat" placeholder="e.g. 52.370216"
+                    step="0.000001" min="-90" max="90"
+                    oninput="onManualCoordChange()" />
+                </div>
+                <div class="field">
+                  <label class="field-label">Longitude</label>
+                  <input type="number" id="f-lng" placeholder="e.g. 4.895168"
+                    step="0.000001" min="-180" max="180"
+                    oninput="onManualCoordChange()" />
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="applyManualCoords()" title="Move map pin to these coordinates">Apply to Map</button>
+                <button class="btn btn-ghost btn-sm" onclick="reverseGeocodeManualCoords()" title="Reverse geocode these coordinates">Reverse Geocode</button>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button class="btn btn-ghost btn-sm" onclick="resetCoordinatesToAddress()">Reset to Address</button>
+                <span id="coord-source-label" style="font-size:11px;color:var(--planon-gray-500);margin-left:auto"></span>
+              </div>
+            </div>
+
+            <div class="field-group cols-3">
+              <div class="field">
+                <label class="field-label">Altitude (m)</label>
+                <input type="number" id="f-alt" placeholder="e.g. 12" step="0.1" />
+              </div>
+              <div class="field">
+                <label class="field-label">Coord. Accuracy</label>
+                <select id="f-coord-accuracy">
+                  <option value="">— unknown —</option>
+                  <option value="geocoded">Geocoded (address)</option>
+                  <option value="gps">GPS / Survey</option>
+                  <option value="manual_pin">Manual pin</option>
+                  <option value="approximate">Approximate</option>
+                  <option value="inherited">Inherited from City</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Plus Code <span class="info-badge">Google OLC</span></label>
+                <input type="text" id="f-pluscode" placeholder="e.g. 9F469W74+44" readonly class="readonly" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Structured Address Fields -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">Structured Address Fields</span>
+          </div>
+          <div class="card-body">
+
+            <div class="section-title">Street &amp; Building</div>
+            <div class="field-group cols-6">
+              <div class="field" style="grid-column: span 3>
+                <label class="field-label">Street Name</label>
+                <input type="text" id="f-street-name" placeholder="e.g. Herengracht" />
+              </div>
+              <div class="field">
+                <label class="field-label">House / Bldg Nr <span class="required">*</span></label>
+                <input type="text" id="f-street-nr" placeholder="e.g. 182" />
+              </div>
+              <div class="field">
+                <label class="field-label">Nr Suffix</label>
+                <input type="text" id="f-street-suffix" placeholder="A, B, bis…" />
+              </div>
+              <div class="field">
+                <label class="field-label">Floor / Unit</label>
+                <input type="text" id="f-floor" placeholder="e.g. 3rd floor" />
+              </div>
+            </div>
+            <div class="field-group cols-1" style="margin-bottom:8px">
+              <div class="field">
+                <label class="field-label">Address Line 1 <span class="required">*</span></label>
+                <input type="text" id="f-line1" placeholder="Full street address line 1" />
+              </div>
+            </div>
+            <div class="field-group cols-1" style="margin-bottom:0">
+              <div class="field">
+                <label class="field-label">Address Line 2 <span class="info-badge" style="margin-left:4px">Optional</span></label>
+                <input type="text" id="f-line2" placeholder="Suite, building name, campus…" />
+              </div>
+            </div>
+
+            <div class="section-title">Postal &amp; Locality</div>
+            <div class="field-group cols-4">
+              <div class="field">
+                <label class="field-label">Postal Code</label>
+                <input type="text" id="f-postal" placeholder="e.g. 1016 BS" />
+              </div>
+              <div class="field">
+                <label class="field-label">Postal Suffix</label>
+                <input type="text" id="f-postal-suffix" placeholder="ZIP+4, etc." />
+              </div>
+              <div class="field" style="grid-column: span 2">
+                <label class="field-label">City / Locality <span class="required">*</span></label>
+                <input type="text" id="f-city" placeholder="e.g. Amsterdam" />
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field">
+                <label class="field-label">Sub-locality / District</label>
+                <input type="text" id="f-sublocality" placeholder="Neighbourhood, ward…" />
+              </div>
+              <div class="field">
+                <label class="field-label">Municipality</label>
+                <input type="text" id="f-municipality" placeholder="e.g. Amsterdam" />
+              </div>
+            </div>
+
+            <div class="section-title">Administrative Divisions <span style="font-size:13px;font-weight:400;color:var(--fab-color-text-subdued);letter-spacing:0">— Labels adapt per country</span></div>
+            <div class="field-group cols-1">
+              <div class="field">
+                <label class="field-label" id="lbl-adm1">Admin Level 1 <span class="info-badge" id="lbl-adm1-eg">Province</span></label>
+                <input type="text" id="f-adm1" placeholder="Province / State / Region…" />
+              </div>
+              <div class="field">
+                <label class="field-label" id="lbl-adm2">Admin Level 2 <span class="info-badge" id="lbl-adm2-eg">County</span></label>
+                <input type="text" id="f-adm2" placeholder="County / District…" />
+              </div>
+              <div class="field">
+                <label class="field-label" id="lbl-adm3">Admin Level 3 <span class="info-badge" id="lbl-adm3-eg">Commune</span></label>
+                <input type="text" id="f-adm3" placeholder="Commune / Township…" />
+              </div>
+            </div>
+
+            <div class="section-title">Country &amp; Geopolitical Context</div>
+            <div class="field-group cols-3">
+              <div class="field" style="grid-column: span 2">
+                <label class="field-label">Country / Territory Display Name <span class="required">*</span></label>
+                <input type="text" id="f-country" placeholder="e.g. Netherlands" />
+              </div>
+              <div class="field">
+                <label class="field-label">ISO 3166-1 Code <span class="info-badge">Alpha-2</span></label>
+                <input type="text" id="f-country-code" placeholder="NL" maxlength="2" style="text-transform:uppercase" />
+              </div>
+            </div>
+            <div class="field-group cols-3">
+              <div class="field">
+                <label class="field-label">Sovereignty Status</label>
+                <select id="f-sovereignty">
+                  <option value="">— select —</option>
+                  <option value="independent">Independent State</option>
+                  <option value="territory">Territory / Dependency</option>
+                  <option value="disputed">Disputed / Contested</option>
+                  <option value="autonomous">Autonomous Region</option>
+                  <option value="sar">Special Admin. Region</option>
+                  <option value="federal">Federal Subject</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Display Context <span class="tooltip-icon" title="Controls how this location is labeled in different locale contexts">?</span></label>
+                <select id="f-display-context">
+                  <option value="global">Global (Neutral)</option>
+                  <option value="us">North American</option>
+                  <option value="eu">European</option>
+                  <option value="cn">Chinese</option>
+                  <option value="custom">Custom per BU</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Continent</label>
+                <select id="f-continent">
+                  <option value="">— select —</option>
+                  <option value="AF">Africa</option>
+                  <option value="AN">Antarctica</option>
+                  <option value="AS">Asia</option>
+                  <option value="EU">Europe</option>
+                  <option value="NA">North America</option>
+                  <option value="OC">Oceania</option>
+                  <option value="SA">South America</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ TAB 2: Field Model -->
+  <div class="tab-panel" id="panel-model">
+    <div class="info-banner" style="margin-bottom:20px">
+      <span class="info-banner-icon">💡</span>
+      <div>
+        <strong>Global Geographic Field Model Proposal</strong> — This model addresses multinational flexibility, geopolitical sensitivity (e.g., Taiwan/Province vs Country), address inheritance, and modern geocoding integration.
+        <span class="tag tag-new" style="margin-left:6px">New fields</span>
+        <span class="tag tag-enhance" style="margin-left:4px">Enhanced</span>
+        <span class="tag tag-remove" style="margin-left:4px">Deprecated</span>
+      </div>
+    </div>
+
+    <div class="model-grid">
+
+      <div class="model-card">
+        <div class="model-card-head">📬 Street &amp; Building</div>
+        <div class="model-card-body">
+          <div class="model-field-row"><div><div class="model-field-name">streetName</div><div class="model-field-desc">Parsed street name only</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">streetNumber</div><div class="model-field-desc">House / building number</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">streetNumberSuffix <span class="tag tag-new">NEW</span></div><div class="model-field-desc">A, B, bis, ½, etc.</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">addressLine1</div><div class="model-field-desc">Full primary address line</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">addressLine2</div><div class="model-field-desc">Suite, unit, floor</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">addressLine3 <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Building name, campus</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">poBox</div><div class="model-field-desc">Post Office Box number</div></div><span class="model-field-type type-str">STR</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-head">📮 Postal &amp; Locality</div>
+        <div class="model-card-body">
+          <div class="model-field-row"><div><div class="model-field-name">postalCode</div><div class="model-field-desc">National postal / ZIP code</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">postalCodeSuffix <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Extension, e.g. ZIP+4</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">locality</div><div class="model-field-desc">City / town / village</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">subLocality <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Neighbourhood, ward, district</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">municipality <span class="tag tag-enhance">↑</span></div><div class="model-field-desc">Municipal authority (may differ from city)</div></div><span class="model-field-type type-ref">REF</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">cityCode <span class="tag tag-new">NEW</span></div><div class="model-field-desc">UN/LOCODE or IATA city code</div></div><span class="model-field-type type-str">STR</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-head">🗂 Administrative Levels</div>
+        <div class="model-card-body">
+          <div class="model-field-row"><div><div class="model-field-name">adminLevel1 <span class="tag tag-enhance">↑</span></div><div class="model-field-desc">State / Province / Region / Oblast</div></div><span class="model-field-type type-ref">REF</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">adminLevel1Label <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Configurable label: "State", "Province"…</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">adminLevel2 <span class="tag tag-new">NEW</span></div><div class="model-field-desc">County / District / Prefecture</div></div><span class="model-field-type type-ref">REF</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">adminLevel2Label <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Configurable label: "County", "District"…</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">adminLevel3 <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Commune / Township / Tehsil</div></div><span class="model-field-type type-ref">REF</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">adminLevel3Label <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Configurable label: "Commune"…</div></div><span class="model-field-type type-str">STR</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-head">🌐 Country &amp; Geopolitics</div>
+        <div class="model-card-body">
+          <div class="model-field-row"><div><div class="model-field-name">countryCode</div><div class="model-field-desc">ISO 3166-1 alpha-2 (neutral key)</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">countryDisplayName <span class="tag tag-enhance">↑</span></div><div class="model-field-desc">Tenant/locale-configurable display name</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">sovereigntyStatus <span class="tag tag-new">NEW</span></div><div class="model-field-desc">independent / territory / disputed / autonomous / SAR</div></div><span class="model-field-type type-enum">ENUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">geopoliticalContext <span class="tag tag-new">NEW</span></div><div class="model-field-desc">JSON map: locale → display name (e.g. TW for CN = "台湾省")</div></div><span class="model-field-type type-str">JSON</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">continent <span class="tag tag-new">NEW</span></div><div class="model-field-desc">ISO continent code: EU, AS, NA…</div></div><span class="model-field-type type-enum">ENUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">timeZone <span class="tag tag-new">NEW</span></div><div class="model-field-desc">IANA tz: "Europe/Amsterdam"</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">currencyCode <span class="tag tag-new">NEW</span></div><div class="model-field-desc">ISO 4217 currency: EUR, USD…</div></div><span class="model-field-type type-str">STR</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-head">📡 Geospatial</div>
+        <div class="model-card-body">
+          <div class="model-field-row"><div><div class="model-field-name">latitude</div><div class="model-field-desc">WGS84 decimal degrees</div></div><span class="model-field-type type-num">NUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">longitude</div><div class="model-field-desc">WGS84 decimal degrees</div></div><span class="model-field-type type-num">NUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">altitude <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Elevation in metres (MSL)</div></div><span class="model-field-type type-num">NUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">coordinateAccuracy <span class="tag tag-new">NEW</span></div><div class="model-field-desc">geocoded / gps / manual_pin / approximate</div></div><span class="model-field-type type-enum">ENUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">coordinateSource <span class="tag tag-new">NEW</span></div><div class="model-field-desc">geocoding_svc / gps / manual / cadastral</div></div><span class="model-field-type type-enum">ENUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">plusCode <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Google Open Location Code</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">geohash <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Geohash for spatial indexing</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">boundingBox <span class="tag tag-new">NEW</span></div><div class="model-field-desc">N/S/E/W for area coverage</div></div><span class="model-field-type type-str">JSON</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-head">🔗 Metadata &amp; Inheritance</div>
+        <div class="model-card-body">
+          <div class="model-field-row"><div><div class="model-field-name">validationStatus <span class="tag tag-new">NEW</span></div><div class="model-field-desc">unvalidated / validated / override / stale</div></div><span class="model-field-type type-enum">ENUM</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">validationSource <span class="tag tag-new">NEW</span></div><div class="model-field-desc">OSM / Google / HERE / Manual</div></div><span class="model-field-type type-str">STR</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">validationTimestamp <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Last geocoding date/time</div></div><span class="model-field-type type-str">DATE</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">inheritFromCity <span class="tag tag-new">NEW</span></div><div class="model-field-desc">Auto-populate from City BO reference</div></div><span class="model-field-type type-bool">BOOL</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">cityRef <span class="tag tag-enhance">↑</span></div><div class="model-field-desc">FK → City BO (drives inheritance)</div></div><span class="model-field-type type-ref">REF</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">countryRef <span class="tag tag-enhance">↑</span></div><div class="model-field-desc">FK → Country BO</div></div><span class="model-field-type type-ref">REF</span></div>
+          <div class="model-field-row"><div><div class="model-field-name">externalId <span class="tag tag-new">NEW</span></div><div class="model-field-desc">OSM / GeoNames / GeoID reference</div></div><span class="model-field-type type-str">STR</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design principles -->
+    <div style="margin-top:24px;background:var(--planon-white);border:1px solid var(--planon-gray-300);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm)">
+      <div class="card-header">
+        <span class="card-header-title">Design Principles &amp; Rationale</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+        <div style="padding:18px 20px;border-right:1px solid var(--planon-gray-100)">
+          <div class="section-title">Geopolitical Neutrality</div>
+          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
+            The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">countryCode</code> stores a neutral ISO key that never changes regardless of political context. The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">geopoliticalContext</code> JSON field stores locale-specific display names, enabling Taiwan to appear as "Taiwan" for EU users and "台湾省" for users in China — both driven from the same underlying data record. The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">sovereigntyStatus</code> enum further disambiguates territories, SAR's, autonomous regions and disputed areas.
+          </p>
+        </div>
+        <div style="padding:18px 20px">
+          <div class="section-title">Inheritance &amp; Staleness</div>
+          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
+            The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">inheritFromCity</code> flag, when enabled, propagates municipality, admin division, country, time zone, and currency from the City BO reference. When the City BO is updated (e.g. a municipality boundary changes), downstream BOs automatically show a <em>stale</em> validation status badge, prompting re-validation — preventing silent data drift across large portfolios.
+          </p>
+        </div>
+        <div style="padding:18px 20px;border-right:1px solid var(--planon-gray-100);border-top:1px solid var(--planon-gray-100)">
+          <div class="section-title">Flexible Address Labels</div>
+          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
+            The three-level administrative hierarchy uses configurable label fields (<code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">adminLevel1Label</code>, etc.) driven by the country reference. A US property shows "State / County / Township"; a Dutch one shows "Province / Gemeente / Wijk"; a Japanese one shows "都道府県 / 市区町村". This eliminates hard-coded "State" or "Province" fields that confuse global users.
+          </p>
+        </div>
+        <div style="padding:18px 20px;border-top:1px solid var(--planon-gray-100)">
+          <div class="section-title">Coordinate Provenance</div>
+          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
+            The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">coordinateAccuracy</code> and <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">coordinateSource</code> fields distinguish between auto-geocoded, GPS-surveyed, and manually pinned coordinates — critical for space utilisation analytics, IoT sensor placement, and emergency response routing. Moving the pin manually sets accuracy to <em>manual_pin</em> while preserving the validated postal address, preventing accidental data corruption.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toast container ─── -->
+<div id="toast-container"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════════════ */
+let map, marker;
+let mapMode = 'click';
+let validatedLat = null, validatedLng = null;  // coordinates from geocoding
+let currentLat = null, currentLng = null;       // committed pin position
+let pendingLat = null, pendingLng = null;        // placed but not yet confirmed
+let addressValidated = false;
+let pendingReverseResult = null;
+let searchDebounce = null;
+
+const adminLabels = {
+  // countryCode -> [L1 label, L1 example, L2 label, L2 example, L3 label, L3 example]
+  'NL': ['Province','Noord-Holland','Municipality','Gemeente','Sub-district','Wijk'],
+  'US': ['State','California','County','Los Angeles County','Township','Beverly Hills Township'],
+  'DE': ['Federal State','Bayern','District','Landkreis München','Municipality','Gemeinde'],
+  'FR': ['Region','Île-de-France','Department','Paris (75)','Commune','Paris 1er'],
+  'GB': ['Country','England','County','Greater London','District','City of London'],
+  'CN': ['Province / Municipality','Beijing','Prefecture','Beijing City','County','Dongcheng'],
+  'TW': ['Administrative Region','Taipei City','District','Zhongzheng District','Village','里'],
+  'AU': ['State / Territory','New South Wales','Region','Greater Sydney','LGA','City of Sydney'],
+  'JP': ['Prefecture (都道府県)','東京都','City (市区町村)','新宿区','Ward','丁目'],
+  'IN': ['State','Maharashtra','District','Mumbai District','Taluk','Andheri'],
+  'BR': ['State (Estado)','São Paulo','Mesoregion','Metropolitana SP','Municipality','São Paulo'],
+  'default': ['Admin Level 1','Province / State','Admin Level 2','County / District','Admin Level 3','Commune / Township']
+};
+
+/* ════════════════════════════════════════════════════════════
+   MAP INIT
+════════════════════════════════════════════════════════════ */
+function makeIcon(pending) {
+  const fill = pending ? '#E87722' : '#004EA8';
+  const inner = pending ? '#FFFFFF' : '#E87722';
+  return L.divIcon({
+    html: `<div style="width:28px;height:38px;filter:drop-shadow(0 3px 6px rgba(0,40,85,.4))">
+      <svg viewBox="0 0 28 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 0C6.3 0 0 6.3 0 14c0 9.8 14 24 14 24S28 23.8 28 14C28 6.3 21.7 0 14 0z" fill="${fill}"/>
+        <circle cx="14" cy="14" r="6" fill="white"/>
+        <circle cx="14" cy="14" r="3" fill="${inner}"/>
+      </svg>
+    </div>`,
+    className: '',
+    iconSize: [28, 38],
+    iconAnchor: [14, 38],
+    popupAnchor: [0, -38]
+  });
+}
+
+function initMap() {
+  map = L.map('map', { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
+  map.setView([20, 0], 2);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  marker = L.marker([20, 0], { icon: makeIcon(false), draggable: false }).addTo(map);
+  marker.setOpacity(0);
+
+  marker.on('dragend', function(e) {
+    const pos = e.target.getLatLng();
+    setPendingPin(pos.lat, pos.lng);
+  });
+
+  map.getContainer().style.cursor = 'crosshair';
+  marker.dragging.disable();
+
+  map.on('click', function(e) {
+    if (pendingLat !== null) { cancelPending(); return; }
+    if (currentLat !== null) {
+      currentLat = null; currentLng = null;
+      marker.setOpacity(0);
+      updateMapInfoStrip();
+      showMapPanelState('idle');
+      setCoordBadge('none');
+      return;
+    }
+    setPendingPin(e.latlng.lat, e.latlng.lng);
+  });
+
+  // Scroll-to-zoom gate
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+  const gateEl = document.getElementById('map-scroll-gate');
+  const gateMsg = document.getElementById('map-scroll-gate-msg');
+  gateMsg.innerHTML = isMac
+    ? 'Use <kbd style="font:inherit;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:4px;padding:1px 6px">⌘</kbd> + scroll to zoom'
+    : 'Use <kbd style="font:inherit;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:4px;padding:1px 6px">Ctrl</kbd> + scroll to zoom';
+
+  let gateTimer;
+  const mapEl = document.getElementById('map');
+
+  mapEl.addEventListener('wheel', function(e) {
+    const modKey = isMac ? e.metaKey : e.ctrlKey;
+    if (modKey) {
+      e.preventDefault();
+      map.scrollWheelZoom.enable();
+      gateEl.classList.remove('visible');
+      clearTimeout(gateTimer);
+    } else {
+      map.scrollWheelZoom.disable();
+      gateEl.classList.add('visible');
+      clearTimeout(gateTimer);
+      gateTimer = setTimeout(() => gateEl.classList.remove('visible'), 1200);
+    }
+  }, { passive: false });
+
+  mapEl.addEventListener('mouseleave', function() {
+    clearTimeout(gateTimer);
+    gateEl.classList.remove('visible');
+  });
+}
+
+
+
+/* Commit marker at position (blue) — called by address search & applyReverseResult */
+function placeMarkerAt(lat, lng, accuracy) {
+  currentLat = lat; currentLng = lng;
+  pendingLat = null; pendingLng = null;
+  marker.setLatLng([lat, lng]);
+  marker.setIcon(makeIcon(false));
+  marker.setOpacity(1);
+  map.setView([lat, lng], Math.max(map.getZoom(), 14));
+  setField('f-lat', lat.toFixed(6));
+  setField('f-lng', lng.toFixed(6));
+  setField('f-coord-accuracy', accuracy || 'geocoded');
+  updatePinDisplay(lat, lng);
+  updateMapInfoStrip();
+  showMapPanelState('idle');
+}
+
+/* Move marker to PENDING (orange) — does NOT update any fields */
+function setPendingPin(lat, lng) {
+  pendingLat = lat; pendingLng = lng;
+  marker.setLatLng([lat, lng]);
+  marker.setIcon(makeIcon(true));
+  marker.setOpacity(1);
+  map.panTo([lat, lng]);
+  document.getElementById('pending-lat-display').textContent = lat.toFixed(6);
+  document.getElementById('pending-lng-display').textContent = lng.toFixed(6);
+  document.getElementById('map-info-strip').innerHTML =
+    '<span style="color:var(--planon-orange)">●</span> Pending — confirm or cancel below';
+  showMapPanelState('pending');
+}
+
+/* Commit coords only — no address update */
+function commitCoordsOnly() {
+  if (pendingLat === null) return;
+  currentLat = pendingLat; currentLng = pendingLng;
+  pendingLat = null; pendingLng = null;
+  marker.setIcon(makeIcon(false));
+  setField('f-lat', currentLat.toFixed(6));
+  setField('f-lng', currentLng.toFixed(6));
+  document.getElementById('f-lat').classList.remove('validated');
+  document.getElementById('f-lng').classList.remove('validated');
+  document.getElementById('f-lat').classList.add('manual-override');
+  document.getElementById('f-lng').classList.add('manual-override');
+  setField('f-coord-accuracy', 'manual_pin');
+  setCoordBadge('manual');
+  updatePinDisplay(currentLat, currentLng);
+  updateMapInfoStrip();
+  updateAddressLockInfo();
+  document.getElementById('coord-source-label').textContent = '📌 Manual pin';
+  showMapPanelState('idle');
+}
+
+/* Cancel pending — snap marker back */
+function cancelPending() {
+  pendingLat = null; pendingLng = null;
+  pendingReverseResult = null;
+  if (currentLat !== null) {
+    marker.setLatLng([currentLat, currentLng]);
+    marker.setIcon(makeIcon(false));
+    marker.setOpacity(1);
+  } else {
+    marker.setOpacity(0);
+  }
+  updateMapInfoStrip();
+  showMapPanelState('idle');
+}
+
+/* Switch panel state */
+function showMapPanelState(state) {
+  ['idle','pending','loading','result'].forEach(s => {
+    document.getElementById('map-panel-'+s).classList.toggle('active', s === state);
+  });
+}
+
+function updateMapInfoStrip() {
+  const strip = document.getElementById('map-info-strip');
+  if (!currentLat) {
+    strip.innerHTML = '<span style="color:var(--planon-gray-300)">●</span> No location set';
+    return;
+  }
+  strip.innerHTML = `<span style="color:var(--planon-success)">●</span> ${currentLat.toFixed(5)}, ${currentLng.toFixed(5)} · OSM / Leaflet`;
+}
+
+function updatePinDisplay(lat, lng) {
+  document.getElementById('pin-lat-display').textContent = lat.toFixed(6);
+  document.getElementById('pin-lng-display').textContent = lng.toFixed(6);
+}
+
+function setCoordBadge(type) {
+  const b = document.getElementById('coord-status-badge');
+  if (type === 'geocoded') { b.className = 'coord-status-badge geocoded'; b.textContent = '⬤ Geocoded'; }
+  else if (type === 'manual') { b.className = 'coord-status-badge manual'; b.textContent = '⬤ Manual Pin'; }
+  else { b.className = 'coord-status-badge none'; b.textContent = '⬤ Not set'; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   MANUAL COORDINATES
+════════════════════════════════════════════════════════════ */
+function onManualCoordChange() {
+  document.getElementById('f-lat').classList.add('manual-override');
+  document.getElementById('f-lng').classList.add('manual-override');
+}
+
+/* Apply manually typed coords — moves pin to pending (same flow as drag/click) */
+function applyManualCoords() {
+  const lat = parseFloat(document.getElementById('f-lat').value);
+  const lng = parseFloat(document.getElementById('f-lng').value);
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    toast('⚠ Invalid coordinates. Latitude: -90 to 90, Longitude: -180 to 180', 'error');
+    return;
+  }
+  setPendingPin(lat, lng);
+  map.setView([lat, lng], Math.max(map.getZoom(), 14));
+}
+
+/* Reverse geocode from typed lat/lng — same pending flow */
+function reverseGeocodeManualCoords() {
+  const lat = parseFloat(document.getElementById('f-lat').value);
+  const lng = parseFloat(document.getElementById('f-lng').value);
+  if (isNaN(lat) || isNaN(lng)) { toast('⚠ Enter coordinates first', 'warning'); return; }
+  setPendingPin(lat, lng);
+  map.setView([lat, lng], Math.max(map.getZoom(), 14));
+  startReverseFromPending();
+}
+
+function resetCoordinatesToAddress() {
+  if (!validatedLat) { toast('No validated address to reset to', 'warning'); return; }
+  cancelPending();
+  currentLat = validatedLat; currentLng = validatedLng;
+  placeMarkerAt(validatedLat, validatedLng, 'geocoded');
+  setCurrentCoords(validatedLat, validatedLng, 'geocoded', true);
+  setCoordBadge('geocoded');
+  updateAddressLockInfo();
+  toast('↩ Coordinates reset to geocoded address location', 'info');
+}
+
+/* ════════════════════════════════════════════════════════════
+   REVERSE GEOCODING
+════════════════════════════════════════════════════════════ */
+async function startReverseFromPending() {
+  if (pendingLat === null) return;
+  showMapPanelState('loading');
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${pendingLat}&lon=${pendingLng}&format=json&addressdetails=1&accept-language=en`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const data = await res.json();
+    if (data.error) { showMapPanelState('pending'); toast('No address found at this location', 'warning'); return; }
+    pendingReverseResult = data;
+    renderReverseResult(data, pendingLat, pendingLng);
+    showMapPanelState('result');
+  } catch(e) {
+    showMapPanelState('pending');
+    toast('⚠ Reverse geocoding failed — check connection', 'error');
+  }
+}
+
+function renderReverseResult(data, lat, lng) {
+  const a = data.address || {};
+  const cc = (a.country_code || '').toUpperCase();
+  const street = a.road || a.pedestrian || '';
+  const num = a.house_number || '';
+  const streetLine = street && num
+    ? (isNumberFirst(cc) ? `${num} ${street}` : `${street} ${num}`)
+    : (street || num);
+  const city = a.city || a.town || a.village || '';
+  document.getElementById('map-panel-result-content').innerHTML = `
+    <div style="font-weight:600;color:var(--planon-navy);margin-bottom:8px;font-size:13px">
+      📍 ${escHtml(data.display_name.split(',').slice(0,3).join(', '))}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      ${row('Street', streetLine)}
+      ${row('Postal code', a.postcode)}
+      ${row('City', city)}
+      ${row('State / Province', a.state || a.region)}
+      ${row('Country', a.country)}
+      ${row('Coordinates', `${lat.toFixed(6)}, ${lng.toFixed(6)}`)}
+    </table>
+    <p style="margin-top:8px;font-size:11px;color:var(--planon-gray-500)">
+      Applying will update all address fields and commit the new coordinates.
+    </p>`;
+}
+
+function row(label, val) {
+  if (!val) return '';
+  return `<tr><td style="padding:3px 6px 3px 0;color:var(--planon-gray-500);white-space:nowrap">${escHtml(label)}</td>
+    <td style="padding:3px 0;color:var(--planon-gray-900);font-weight:500">${escHtml(val)}</td></tr>`;
+}
+
+function applyReverseResult() {
+  if (!pendingReverseResult || pendingLat === null) return;
+  const lat = pendingLat, lng = pendingLng;
+  // Patch the lat/lon into result so populateFromResult uses the pin position
+  pendingReverseResult.lat = String(lat);
+  pendingReverseResult.lon = String(lng);
+  currentLat = lat; currentLng = lng;
+  validatedLat = lat; validatedLng = lng;
+  pendingLat = null; pendingLng = null;
+  marker.setIcon(makeIcon(false));
+  populateFromResult(pendingReverseResult);
+  pendingReverseResult = null;
+  showMapPanelState('idle');
+}
+
+/* ════════════════════════════════════════════════════════════
+   IP GEOLOCATION — bias search results to user's country
+   Uses ip-api.com (free, no key, no browser permissions)
+════════════════════════════════════════════════════════════ */
+let userCountryCode = '';   // ISO alpha-2 from IP lookup
+let userCountryName = '';
+let ipLookupDone = false;
+
+async function detectUserCountry() {
+  try {
+    const res = await fetch('https://ip-api.com/json/?fields=countryCode,country,lat,lon');
+    const d = await res.json();
+    if (d.countryCode) {
+      userCountryCode = d.countryCode;
+      userCountryName = d.country;
+      ipLookupDone = true;
+      // Silently update placeholder to hint at local bias
+      const el = document.getElementById('address-search');
+      if (el) el.placeholder = `Search address${userCountryName ? ' — results prioritise ' + userCountryName : ''}…`;
+    }
+  } catch(e) { /* silent fail — search still works globally */ }
+}
+
+/* ════════════════════════════════════════════════════════════
+   COUNTRIES USING NUMBER-FIRST FORMAT
+   (street number before street name)
+════════════════════════════════════════════════════════════ */
+const numberFirstCountries = new Set([
+  'US','CA','AU','NZ','GB','IE','SG','HK','MY','PH','IN','PK','BD',
+  'ZA','NG','GH','KE','TZ','UG','ZW','IL','AE','SA','QA','KW','BH',
+  'OM','JO','IQ','IR','AF','MM','KH','VN','TH','ID','JP','KR','CN',
+  'TW','MX','AR','CL','CO','PE','VE','EC','BO','PY','UY','GT','HN',
+  'SV','NI','CR','PA','CU','DO','PR','TT','JM','BB','GD','LC','VC',
+  'AG','BS','KY','TC','BZ','GY','SR'
+]);
+
+function isNumberFirst(cc) {
+  return numberFirstCountries.has((cc || '').toUpperCase());
+}
+
+/* ════════════════════════════════════════════════════════════
+   FORMAT AUTOCOMPLETE MAIN LINE
+   Smart display: street+number or number+street per country,
+   plus city, country code. Graceful when fields are missing.
+════════════════════════════════════════════════════════════ */
+function formatAddressMain(r) {
+  const a = r.address || {};
+  const cc = (a.country_code || '').toUpperCase();
+  const street = a.road || a.pedestrian || a.footway || a.path || '';
+  const num    = a.house_number || '';
+  const city   = a.city || a.town || a.village || a.hamlet || a.municipality || '';
+  const postal = a.postcode || '';
+  const country = cc || '';
+
+  // Build the street+number part
+  let streetPart = '';
+  if (street && num) {
+    streetPart = isNumberFirst(cc) ? `${num} ${street}` : `${street} ${num}`;
+  } else if (street) {
+    streetPart = street;
+  } else if (num) {
+    streetPart = num;
+  }
+
+  // If this is just a city/region/country result (no street), use the type label
+  const osmType = r.type || r.class || '';
+  const isBroadResult = !street && !num;
+
+  const parts = [];
+  if (streetPart)      parts.push(streetPart);
+  if (postal && num)   parts.push(postal);   // postal useful next to house nr
+  if (city)            parts.push(city);
+  if (country)         parts.push(country);
+
+  if (parts.length === 0) {
+    // Fallback: use first two comma-parts of display_name
+    return r.display_name.split(',').slice(0, 2).join(',').trim();
+  }
+  return parts.join(', ');
+}
+
+/* Secondary line: broader context — state/region/country name */
+function formatAddressSub(r) {
+  const a = r.address || {};
+  const parts = [];
+  const state   = a.state || a.region || a.province || '';
+  const country = a.country || '';
+  const type    = r.type || r.class || '';
+
+  if (state)   parts.push(state);
+  if (country) parts.push(country);
+
+  // Append type hint for non-address results
+  const broadTypes = ['city','town','village','hamlet','suburb','county','state',
+                      'country','administrative','natural','aeroway','railway','tourism'];
+  if (broadTypes.includes(type)) {
+    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+    return `${typeLabel}${parts.length ? '  ·  ' + parts.join(', ') : ''}`;
+  }
+  return parts.join(', ');
+}
+
+/* ════════════════════════════════════════════════════════════
+   SEARCH / AUTOCOMPLETE  (Nominatim OSM)
+════════════════════════════════════════════════════════════ */
+let lastQuery = '';
+
+function toggleSearchInfo(btn) {
+  const popover = document.getElementById('search-info-popover');
+  const isOpen = !popover.classList.contains('open');
+  popover.classList.toggle('open', isOpen);
+  btn.setAttribute('aria-expanded', isOpen);
+  if (isOpen) {
+    const r = btn.getBoundingClientRect();
+    const gap = 8;
+    popover.style.top = (r.bottom + gap) + 'px';
+    // Clamp to viewport right edge
+    const left = Math.min(r.left, window.innerWidth - 300 - 8);
+    popover.style.left = Math.max(8, left) + 'px';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  const btn = document.getElementById('search-info-btn');
+  const popover = document.getElementById('search-info-popover');
+  if (btn && popover && !btn.contains(e.target)) {
+    popover.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+function handleSearchInput(val) {
+  clearTimeout(searchDebounce);
+  if (val.length < 2) { closeDropdown(); return; }
+  searchDebounce = setTimeout(() => fetchSuggestions(val), 320);
+}
+
+async function fetchSuggestions(query) {
+  if (query === lastQuery) return;
+  lastQuery = query;
+  const dd = document.getElementById('autocomplete-dropdown');
+  dd.innerHTML = '<div class="autocomplete-loading"><span class="spin dark"></span> Searching…</div>';
+  dd.classList.add('open');
+  try {
+    const results = await nominatimSearch(query, 8);
+    renderSuggestions(results, query);
+  } catch(e) {
+    dd.innerHTML = '<div class="autocomplete-loading" style="color:var(--planon-error)">⚠ Search unavailable — check connection</div>';
+  }
+}
+
+/* Build Nominatim URL — country-biased when we have IP location,
+   with a deduplicated fallback for zero local results */
+async function nominatimSearch(query, limit) {
+  const base = 'https://nominatim.openstreetmap.org/search';
+  const params = new URLSearchParams({
+    q: query,
+    format: 'json',
+    addressdetails: '1',
+    namedetails: '1',
+    limit: String(limit),
+    'accept-language': 'en'
+  });
+
+  // Bias toward user's country first
+  if (userCountryCode) params.set('countrycodes', userCountryCode.toLowerCase());
+
+  const biasedRes  = await fetch(`${base}?${params}`, { headers: {'Accept-Language':'en'} });
+  const biasedData = await biasedRes.json();
+
+  // If we got enough local hits, return them
+  if (biasedData.length >= 3 || !userCountryCode) return biasedData;
+
+  // Fuzzy fallback: also search globally (combine, deduplicate by osm_id)
+  params.delete('countrycodes');
+  const globalRes  = await fetch(`${base}?${params}`, { headers: {'Accept-Language':'en'} });
+  const globalData = await globalRes.json();
+
+  const seen = new Set(biasedData.map(r => r.osm_id));
+  const extras = globalData.filter(r => !seen.has(r.osm_id));
+  return [...biasedData, ...extras].slice(0, limit);
+}
+
+function renderSuggestions(results, query) {
+  const dd = document.getElementById('autocomplete-dropdown');
+  if (!results.length) {
+    // Last-resort: suggest spelling correction hint
+    dd.innerHTML = `<div class="autocomplete-loading">
+      No results — try different spelling or broader search
+    </div>`;
+    return;
+  }
+
+  // Group: local (matching user country) vs global
+  const local  = userCountryCode
+    ? results.filter(r => (r.address?.country_code||'').toUpperCase() === userCountryCode)
+    : results;
+  const global = userCountryCode
+    ? results.filter(r => (r.address?.country_code||'').toUpperCase() !== userCountryCode)
+    : [];
+
+  let html = '';
+
+  if (local.length && global.length) {
+    html += `<div style="padding:5px 12px 3px;font-size:10.5px;font-weight:700;color:var(--planon-blue);
+      text-transform:uppercase;letter-spacing:.4px;background:var(--planon-blue-pale)">
+      📍 ${escHtml(userCountryName || userCountryCode)}</div>`;
+  }
+
+  const renderItem = (r, i) => {
+    const main = formatAddressMain(r);
+    const sub  = formatAddressSub(r);
+    const icon = getTypeIcon(r.type || r.class);
+    return `<div class="autocomplete-item" onclick="selectResult(${i})" data-idx="${i}" id="ac-item-${i}">
+      <span class="autocomplete-item-icon">${icon}</span>
+      <div style="min-width:0">
+        <div class="autocomplete-item-main">${escHtml(main)}</div>
+        ${sub ? `<div class="autocomplete-item-sub">${escHtml(sub)}</div>` : ''}
+      </div>
+    </div>`;
+  };
+
+  html += local.map((r, i) => renderItem(r, i)).join('');
+
+  if (global.length) {
+    html += `<div style="padding:5px 12px 3px;font-size:10.5px;font-weight:700;color:var(--planon-gray-500);
+      text-transform:uppercase;letter-spacing:.4px;background:var(--planon-gray-100);border-top:1px solid var(--planon-gray-100)">
+      🌍 Worldwide</div>`;
+    html += global.map((r, i) => renderItem(r, local.length + i)).join('');
+  }
+
+  if (!local.length) {
+    html = results.map((r, i) => renderItem(r, i)).join('');
+  }
+
+  dd.innerHTML = html;
+  dd._results = results;
+  dd._highlighted = -1;
+}
+
+function getTypeIcon(type) {
+  const m = { building:'🏢', house:'🏠', city:'🏙', town:'🌆', village:'🏘', road:'🛣',
+    highway:'🛣', amenity:'📍', tourism:'🗺', natural:'🌿', aeroway:'✈', railway:'🚉',
+    suburb:'🏘', postcode:'📮', country:'🌐', administrative:'🗂', hotel:'🏨',
+    restaurant:'🍽', hospital:'🏥', school:'🏫', park:'🌳', shop:'🛍' };
+  return m[type] || '📍';
+}
+
+function handleSearchKey(e) {
+  const dd = document.getElementById('autocomplete-dropdown');
+  if (!dd.classList.contains('open') || !dd._results) return;
+  const n = dd._results.length;
+  if (e.key === 'ArrowDown') { e.preventDefault(); highlightItem(Math.min((dd._highlighted >= 0 ? dd._highlighted : -1)+1, n-1)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); highlightItem(Math.max((dd._highlighted||0)-1, 0)); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (dd._highlighted >= 0) selectResult(dd._highlighted); else doSearch(); }
+  else if (e.key === 'Escape') closeDropdown();
+}
+
+function highlightItem(idx) {
+  const dd = document.getElementById('autocomplete-dropdown');
+  document.querySelectorAll('.autocomplete-item').forEach(el => el.classList.remove('highlighted'));
+  const el = document.getElementById('ac-item-'+idx);
+  if (el) { el.classList.add('highlighted'); el.scrollIntoView({ block: 'nearest' }); }
+  dd._highlighted = idx;
+}
+
+function selectResult(idx) {
+  const dd = document.getElementById('autocomplete-dropdown');
+  const r = dd._results[idx];
+  if (!r) return;
+  closeDropdown();
+  populateFromResult(r);
+}
+
+async function doSearch() {
+  const q = document.getElementById('address-search').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('search-btn');
+  document.getElementById('search-btn-text').innerHTML = '<span class="spin"></span>';
+  btn.disabled = true;
+  try {
+    const data = await nominatimSearch(q, 1);
+    if (data.length) { populateFromResult(data[0]); }
+    else { toast('No results found — try a different spelling or broader query', 'warning'); }
+  } catch(e) {
+    toast('⚠ Search failed — please check your internet connection', 'error');
+  }
+  document.getElementById('search-btn-text').textContent = 'Search';
+  btn.disabled = false;
+}
+
+function closeDropdown() {
+  document.getElementById('autocomplete-dropdown').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('search-wrapper').contains(e.target)) closeDropdown();
+});
+
+/* ════════════════════════════════════════════════════════════
+   POPULATE FIELDS FROM NOMINATIM RESULT
+════════════════════════════════════════════════════════════ */
+function populateFromResult(r) {
+  const a = r.address || {};
+  const lat = parseFloat(r.lat);
+  const lng = parseFloat(r.lon);
+
+  // Street
+  setFieldValidated('f-street-name', a.road || a.pedestrian || a.footway || '');
+  setFieldValidated('f-street-nr', a.house_number || '');
+  setFieldValidated('f-line1', buildLine1(a));
+  setFieldValidated('f-postal', a.postcode || '');
+  setFieldValidated('f-city', a.city || a.town || a.village || a.hamlet || a.municipality || '');
+  setFieldValidated('f-sublocality', a.suburb || a.neighbourhood || a.quarter || '');
+  setFieldValidated('f-municipality', a.municipality || a.city || a.town || '');
+  setFieldValidated('f-adm1', a.state || a.region || a.province || '');
+  setFieldValidated('f-adm2', a.county || a.state_district || a.district || '');
+  setFieldValidated('f-adm3', a.quarter || '');
+  setFieldValidated('f-country', a.country || '');
+  setFieldValidated('f-country-code', (a.country_code || '').toUpperCase());
+
+  // Continent
+  setContinent(a.country_code);
+
+  // Update admin labels based on country
+  updateAdminLabels(a.country_code?.toUpperCase());
+
+  // Sovereignty status
+  // Heuristic based on country_code
+  const disputed = ['tw', 'ps', 'xk', 'so', 'ss'];
+  const sar = ['hk', 'mo'];
+  const territory = ['gi', 'fk', 'vi', 'gu', 'as', 'pr'];
+  const cc = (a.country_code || '').toLowerCase();
+  if (sar.includes(cc)) setField('f-sovereignty', 'sar');
+  else if (disputed.includes(cc)) setField('f-sovereignty', 'disputed');
+  else if (territory.includes(cc)) setField('f-sovereignty', 'territory');
+  else setField('f-sovereignty', 'independent');
+
+  // Coords
+  validatedLat = lat; validatedLng = lng;
+  placeMarkerAt(lat, lng, 'geocoded');
+  setCurrentCoords(lat, lng, 'geocoded', true);
+  setCoordBadge('geocoded');
+
+  // Plus Code (simple approximation)
+  setField('f-pluscode', approxPlusCode(lat, lng));
+  setField('f-coord-accuracy', 'geocoded');
+
+  // Update UI state
+  addressValidated = true;
+  document.getElementById('validation-status').classList.add('visible');
+  document.getElementById('coord-source-label').textContent = '✅ Source: OpenStreetMap Nominatim';
+  updateAddressLockInfo();
+
+  // Update search box with display name
+  document.getElementById('address-search').value = r.display_name;
+
+  toast('✅ Address validated and fields populated', 'success');
+}
+
+function buildLine1(a) {
+  const street = a.road || a.pedestrian || '';
+  const num = a.house_number || '';
+  if (!street && !num) return '';
+  if (street && num) {
+    return isNumberFirst((a.country_code || '').toUpperCase())
+      ? `${num} ${street}`
+      : `${street} ${num}`;
+  }
+  return street || num;
+}
+
+function setField(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined) el.value = val;
+}
+
+function setFieldValidated(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = val;
+  el.classList.remove('manual-override');
+  if (val) el.classList.add('validated'); else el.classList.remove('validated');
+}
+
+function setCurrentCoords(lat, lng, accuracy, fromAddress) {
+  currentLat = lat; currentLng = lng;
+  document.getElementById('f-lat').value = lat.toFixed(6);
+  document.getElementById('f-lng').value = lng.toFixed(6);
+  if (!fromAddress) {
+    document.getElementById('f-lat').classList.add('manual-override');
+    document.getElementById('f-lng').classList.add('manual-override');
+  } else {
+    document.getElementById('f-lat').classList.add('validated');
+    document.getElementById('f-lng').classList.add('validated');
+    document.getElementById('f-lat').classList.remove('manual-override');
+    document.getElementById('f-lng').classList.remove('manual-override');
+  }
+}
+
+function updateAddressLockInfo() {
+  const el = document.getElementById('address-lock-info');
+  if (addressValidated) {
+    const pinMoved = (validatedLat && currentLat && (Math.abs(currentLat - validatedLat) > 0.0001 || Math.abs(currentLng - validatedLng) > 0.0001));
+    if (pinMoved) {
+      el.innerHTML = '<span style="color:var(--planon-warn)">⚠</span> Pin moved from validated address location';
+    } else {
+      el.innerHTML = '<span style="color:var(--planon-success)">✅</span> Pin matches validated address';
+    }
+  } else {
+    el.innerHTML = '<span style="color:var(--planon-gray-300)">⬡</span> Address not validated';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ADMIN LABELS
+════════════════════════════════════════════════════════════ */
+function updateAdminLabels(cc) {
+  const labels = adminLabels[cc] || adminLabels['default'];
+  document.getElementById('lbl-adm1-eg').textContent = labels[0];
+  document.getElementById('f-adm1').placeholder = labels[0] + ' — e.g. ' + labels[1];
+  document.getElementById('lbl-adm2-eg').textContent = labels[2];
+  document.getElementById('f-adm2').placeholder = labels[2] + ' — e.g. ' + labels[3];
+  document.getElementById('lbl-adm3-eg').textContent = labels[4];
+  document.getElementById('f-adm3').placeholder = labels[4] + ' — e.g. ' + labels[5];
+}
+
+/* ════════════════════════════════════════════════════════════
+   CONTINENT AUTO-SET
+════════════════════════════════════════════════════════════ */
+const continentMap = {
+  EU: ['ad','al','at','ba','be','bg','by','ch','cy','cz','de','dk','ee','es','fi','fo','fr','gb','ge','gi','gr','hr','hu','ie','is','it','li','lt','lu','lv','mc','md','me','mk','mt','nl','no','pl','pt','ro','rs','ru','se','si','sk','sm','tr','ua','va','xk'],
+  AS: ['ae','af','am','az','bd','bh','bn','bt','cn','hk','id','il','in','iq','ir','jo','jp','kg','kh','kp','kr','kw','kz','la','lb','lk','mm','mn','mo','mv','my','np','om','ph','pk','ps','qa','sa','sg','sy','tj','tl','tm','tw','uz','vn','ye'],
+  NA: ['ag','an','aw','bb','bm','bs','bz','ca','cr','cu','dm','do','gd','gt','hn','ht','jm','kn','ky','lc','mx','ni','pa','pr','sv','tc','tt','us','vc','vi'],
+  SA: ['ar','bo','br','cl','co','ec','fk','gy','pe','py','sr','uy','ve'],
+  AF: ['ao','bf','bi','bj','bw','cd','cf','cg','ci','cm','cv','dj','dz','eg','er','et','ga','gh','gm','gn','gq','gw','ke','km','lr','ls','ly','ma','mg','ml','mr','mu','mw','mz','na','ne','ng','rw','sc','sd','sl','sn','so','ss','st','sz','td','tg','tn','tz','ug','za','zm','zw'],
+  OC: ['au','fj','fm','gu','ki','mh','mp','nc','nf','nr','nz','pf','pg','pw','sb','tk','tl','to','tv','vu','ws'],
+  AN: ['aq']
+};
+
+function setContinent(cc) {
+  if (!cc) return;
+  const c = cc.toLowerCase();
+  for (const [cont, codes] of Object.entries(continentMap)) {
+    if (codes.includes(c)) { setField('f-continent', cont); return; }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   PLUS CODE (simplified approximation for demo)
+════════════════════════════════════════════════════════════ */
+function approxPlusCode(lat, lng) {
+  // Very simplified OLC-like code for demo purposes
+  const CHARS = '23456789CFGHJMPQRVWX';
+  function enc(val, range, steps) {
+    val = (val + range) / (range * 2);
+    let code = '';
+    for (let i = 0; i < steps; i++) {
+      val *= 20;
+      code += CHARS[Math.floor(val) % 20];
+      val -= Math.floor(val);
+    }
+    return code;
+  }
+  return enc(lat, 90, 4) + enc(lng, 180, 4) + '+' + enc(lat * 400 % 20, 10, 2);
+}
+
+/* ════════════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════════════ */
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 350); }, 3200);
+}
+
+/* ════════════════════════════════════════════════════════════
+   TAB SWITCHING
+════════════════════════════════════════════════════════════ */
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+/* ════════════════════════════════════════════════════════════
+   CLEAR / SAVE
+════════════════════════════════════════════════════════════ */
+function clearAll() {
+  ['f-street-name','f-street-nr','f-street-suffix','f-floor','f-line1','f-line2',
+   'f-postal','f-postal-suffix','f-city','f-sublocality','f-municipality',
+   'f-adm1','f-adm2','f-adm3','f-country','f-country-code','f-lat','f-lng',
+   'f-alt','f-pluscode'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('validated','manual-override'); }
+  });
+  ['f-sovereignty','f-display-context','f-continent','f-coord-accuracy'].forEach(id => setField(id,''));
+  document.getElementById('address-search').value = '';
+  marker.setOpacity(0);
+  map.setView([20, 0], 2);
+  currentLat = null; currentLng = null; validatedLat = null; validatedLng = null;
+  addressValidated = false;
+  document.getElementById('validation-status').classList.remove('visible');
+  setCoordBadge('none');
+  document.getElementById('pin-lat-display').textContent = '—';
+  document.getElementById('pin-lng-display').textContent = '—';
+  document.getElementById('address-lock-info').innerHTML = '<span style="color:var(--planon-gray-300)">⬡</span> Address not validated';
+  document.getElementById('coord-source-label').textContent = '';
+  pendingLat = null; pendingLng = null; pendingReverseResult = null;
+  showMapPanelState('idle');
+  updateAdminLabels('');
+  toast('Form cleared', 'info');
+}
+
+function saveRecord() {
+  const city = document.getElementById('f-city').value;
+  const country = document.getElementById('f-country').value;
+  if (!city || !country) { toast('⚠ City and Country are required', 'error'); return; }
+  toast('💾 Record saved successfully', 'success');
+}
+
+/* ════════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════════ */
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  initMap();
+  updateAdminLabels('NL'); // default
+  detectUserCountry();     // async, silently biases search results once resolved
+});
+</script>
+
+<div class="search-info-popover" id="search-info-popover" role="tooltip">
+  Start typing any address, city or landmark. Select from suggestions to auto-populate all geographic fields. You may then adjust individual fields or manually reposition the map pin.
+</div>
+</body>
+</html>
