@@ -11,665 +11,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <!-- Leaflet JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- Page styles -->
+<link rel="stylesheet" href="address-via-claude-v2.css" />
 
-<style>
-  :root { --fab-color-background-page-branded: #F1F4F9; }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: var(--fab-font-family-primary);
-    background: var(--fab-color-background-page-branded);
-    color: var(--fab-color-text-default);
-    min-height: 100vh;
-    font-size: 14px;
-  }
-
-  /* ─── Top bar ─── */
-  .topbar {
-    background: var(--fab-color-background-elevation-1);
-    border-bottom: 1px solid var(--fab-color-divider-default);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    position: sticky; top: 0; z-index: 1000;
-  }
-  .topbar-topline {
-    height: 4px;
-    background: var(--fab-color-background-action-primary-default);
-    flex-shrink: 0;
-    width: 100%;
-  }
-  .topbar-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--fab-spacing-xs) var(--fab-spacing-m);
-    min-height: 48px;
-  }
-  .topbar-logo {
-    display: flex; align-items: center; gap: var(--fab-spacing-m);
-    color: var(--fab-color-text-default);
-    padding-right: var(--fab-spacing-xxl);
-  }
-  .topbar-logo img { display: block; }
-  .topbar-right { display: flex; align-items: center; gap: var(--fab-spacing-m); color: var(--fab-color-text-subdued); font-size: 12px; }
-  .topbar-badge {
-    background: var(--fab-color-status-warning-alt-default);
-    color: var(--fab-color-text-inversed);
-    padding: 2px var(--fab-spacing-xs);
-    border-radius: var(--fab-border-radius-rounded);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .3px;
-    text-transform: uppercase;
-  }
-
-  /* ─── Breadcrumb ─── */
-  .breadcrumb {
-    padding: 10px var(--fab-spacing-l);
-    display: flex; align-items: center; gap: var(--fab-spacing-xxs);
-    font-size: 14px; line-height: 22px; letter-spacing: 0.35px;
-    color: var(--fab-color-text-default);
-    position: sticky; top: var(--topbar-height, 52px); z-index: 900;
-    background: var(--fab-color-background-page-branded);
-  
-  }
-  .breadcrumb a { color: var(--fab-color-text-default); text-decoration: none; }
-  .breadcrumb a:hover { text-decoration: underline; color: var(--fab-color-text-default); }
-  .breadcrumb-sep { color: var(--fab-color-text-default); }
-  .breadcrumb-current { color: var(--fab-color-text-default); font-weight: 400; }
-
-  /* ─── Page layout ─── */
-  .page { max-width: 1240px; margin: 0 auto; padding: var(--fab-spacing-l) 20px 60px; }
-
-  .page-header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    margin-bottom: 20px; gap: var(--fab-spacing-m);
-  }
-  .page-title { font-size: 22px; font-weight: 700; color: var(--fab-color-text-brand); line-height: 1.2; }
-  .page-subtitle { font-size: 13px; color: var(--fab-color-text-subdued); margin-top: var(--fab-spacing-xxs); }
-  .page-actions { display: flex; gap: var(--fab-spacing-xs); flex-shrink: 0; }
-
-  /* ─── Tabs ─── */
-  .tabs {
-    display: flex; gap: 0; border-bottom: var(--fab-border-width-xs) solid var(--fab-color-divider-default);
-    margin-bottom: 20px;
-  }
-  .tab-btn {
-    padding: 10px 20px; font-size: 13px; font-weight: 500;
-    color: var(--fab-color-text-subdued); background: none; border: none;
-    cursor: pointer; border-bottom: var(--fab-border-width-xs) solid transparent;
-    margin-bottom: -2px; transition: all var(--fab-transition-duration-action-states);
-  }
-  .tab-btn:hover { color: var(--fab-color-text-brand); background: var(--fab-color-background-action-secondary-hover); }
-  .tab-btn.active { color: var(--fab-color-text-brand); border-bottom-color: var(--fab-color-border-brand); font-weight: 600; }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-
-  /* ─── Card ─── */
-  .card {
-    background: var(--fab-color-background-elevation-1);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    border-radius: var(--fab-border-radius-card-l);
-    box-shadow: var(--fab-shadow-elevation-1);
-  }
-  .card-header {
-    background: var(--fab-color-background-elevation-1);
-    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    padding: 12px var(--fab-spacing-l);
-    display: flex; align-items: center; gap: var(--fab-spacing-s);
-    color: var(--fab-color-text-default);
-    border-radius: var(--fab-border-radius-card-l) var(--fab-border-radius-card-l) 0 0;
-  }
-  .card-header-title {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 22px;
-    letter-spacing: -0.04px;
-    color: var(--fab-color-text-default);
-  }
-  .card-header-badge {
-    margin-left: auto;
-    background: var(--fab-color-background-page-subdued);
-    color: var(--fab-color-text-subdued);
-    font-size: 11px;
-    padding: 2px var(--fab-spacing-xs);
-    border-radius: var(--fab-border-radius-rounded);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-  }
-  .card-body { padding: var(--fab-spacing-l); }
-
-  /* ─── Main 2-col layout ─── */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-  @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
-
-  /* ─── Form elements ─── */
-  .field-group {
-    display: grid;
-    grid-template-columns: repeat(var(--cols, 2), 1fr);
-    gap: 14px var(--fab-spacing-m);
-    margin-bottom: 20px;
-  }
-  .field-group.cols-1 { --cols: 1; }
-  .field-group.cols-3 { --cols: 3; }
-  .field-group.cols-4 { --cols: 4; }
-
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  .field.full { grid-column: 1 / -1; }
-
-  .field-label {
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 18px;
-    color: var(--fab-color-text-default);
-    letter-spacing: .042px;
-    text-transform: none;
-    display: flex; align-items: center; gap: 5px;
-  }
-  .field-label .required { color: var(--fab-color-status-warning-alt-default); }
-  .field-label .tooltip-icon {
-    color: var(--fab-color-icon-disabled);
-    cursor: help; font-size: 12px;
-    position: relative;
-  }
-  .field-label .info-badge {
-    background: var(--fab-color-background-info);
-    color: var(--fab-color-status-info-default);
-    font-size: 10px;
-    padding: 1px 5px;
-    border-radius: var(--fab-border-radius-chip-m);
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
-  input[type="text"], input[type="number"], select, textarea {
-    width: 100%;
-    padding: 5px var(--fab-spacing-s);
-    border: 1px solid var(--fab-color-border-input-default);
-    border-radius: var(--fab-border-radius-input-m);
-    font-size: 14px;
-    line-height: 22px;
-    font-family: var(--fab-font-family-primary);
-    color: var(--fab-color-text-default);
-    background: var(--fab-color-background-input-default);
-    transition: border-color var(--fab-transition-duration-action-states), box-shadow var(--fab-transition-duration-action-states);
-    outline: none;
-    appearance: none;
-  }
-  input::placeholder, textarea::placeholder {
-    font-style: italic;
-    color: var(--fab-color-text-subdued);
-  }
-  input:focus-visible, select:focus-visible, textarea:focus-visible {
-    border-color: var(--fab-color-border-input-focus);
-    box-shadow: 0 0 0 var(--fab-outline-width-input-focus) var(--fab-color-outline-focus-default);
-  }
-  input:read-only, input.readonly {
-    background: var(--fab-color-background-input-disabled);
-    color: var(--fab-color-text-subdued);
-    cursor: default;
-  }
-  input.validated {
-    background: var(--fab-color-background-success);
-    border-color: var(--fab-color-border-success);
-    color: var(--fab-color-text-default);
-  }
-  input.manual-override {
-    background: var(--fab-color-background-warning);
-    border-color: var(--fab-color-border-warning);
-  }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7A99' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
-
-  .field-hint { font-size: 12px; line-height: 18px; letter-spacing: .042px; color: var(--fab-color-text-default); margin-top: 0; }
-  .field-status {
-    font-size: 11px;
-    display: flex; align-items: center; gap: 4px;
-    margin-top: 2px;
-    font-weight: 500;
-  }
-  .field-status.success { color: var(--fab-color-status-success-default); }
-  .field-status.warning { color: var(--fab-color-status-warning-alt-default); }
-  .field-status.error   { color: var(--fab-color-status-danger-default); }
-
-  /* ─── Search Bar ─── */
-  .search-wrapper {
-    position: relative;
-    
-    display: flex;
-    align-items: center;
-    gap: var(--fab-spacing-xs);
-  }
-  .search-input {
-    width: 100%;
-    padding: 10px 120px 10px 14px;
-    border: var(--fab-border-width-xs) solid var(--fab-color-border-input-default);
-    border-radius: var(--fab-border-radius-input-m);
-    font-size: 14px;
-    font-family: var(--fab-font-family-primary);
-    color: var(--fab-color-text-default);
-    background: var(--fab-color-background-input-default);
-    transition: all var(--fab-transition-duration-action-states);
-    outline: none;
-  }
-  .search-input:focus-visible {
-    border-color: var(--fab-color-border-input-focus);
-    box-shadow: 0 0 0 var(--fab-outline-width-input-focus) var(--fab-color-outline-focus-default);
-  }
-  .search-btn {
-    position: absolute; right: 4px; top: 4px; bottom: 4px;
-    padding: 0 var(--fab-spacing-m);
-    background: var(--fab-color-background-action-primary-default);
-    color: var(--fab-color-text-inversed);
-    border: none;
-    border-radius: var(--fab-border-radius-action-m);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background var(--fab-transition-duration-action-states);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .search-btn:hover { background: var(--fab-color-background-action-primary-hover); }
-  .search-btn:disabled { opacity: .5; cursor: not-allowed; }
-
-  /* ─── Autocomplete dropdown ─── */
-  .autocomplete-dropdown {
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    background: var(--fab-color-background-elevation-1);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    border-radius: var(--fab-border-radius-overlay-m);
-    box-shadow: var(--fab-shadow-elevation-8);
-    z-index: 500;
-    overflow: hidden;
-    max-height: 280px;
-    overflow-y: auto;
-    display: none;
-  }
-  .autocomplete-dropdown.open { display: block; }
-  .autocomplete-item {
-    padding: 10px 14px;
-    cursor: pointer;
-    display: flex; align-items: flex-start; gap: 10px;
-    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-background-page-subdued);
-    transition: background var(--fab-transition-duration-action-states);
-  }
-  .autocomplete-item:last-child { border-bottom: none; }
-  .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--fab-color-background-action-secondary-hover); }
-  .autocomplete-item-icon { color: var(--fab-color-icon-brand); margin-top: 1px; flex-shrink: 0; }
-  .autocomplete-item-main { font-size: 13px; color: var(--fab-color-text-default); font-weight: 500; }
-  .autocomplete-item-sub { font-size: 11.5px; color: var(--fab-color-text-subdued); margin-top: 1px; }
-  .autocomplete-loading {
-    padding: 12px 14px; text-align: center;
-    color: var(--fab-color-text-subdued); font-size: 12px;
-    display: flex; align-items: center; justify-content: center; gap: var(--fab-spacing-xs);
-  }
-
-  /* ─── Section title ─── */
-  .section-title {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 22px;
-    letter-spacing: -0.04px;
-    color: var(--fab-color-text-default);
-    text-transform: none;
-    padding: var(--fab-spacing-s) 0 var(--fab-spacing-s);
-    margin-bottom: var(--fab-spacing-s);
-    display: flex; align-items: center; gap: 6px;
-  }
-
-
-  /* ─── Buttons ─── */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: var(--fab-spacing-xs);
-    padding: 5px var(--fab-spacing-m);
-    border-radius: var(--fab-border-radius-action-m);
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 22px;
-    letter-spacing: 0.35px;
-    font-family: var(--fab-font-family-primary);
-    cursor: pointer;
-    border: var(--fab-border-width-action-default) solid transparent;
-    transition: background var(--fab-transition-duration-action-states), box-shadow var(--fab-transition-duration-action-states), border-color var(--fab-transition-duration-action-states);
-    white-space: nowrap;
-    position: relative;
-    text-decoration: none;
-  }
-  /* Primary */
-  .btn-primary { background: var(--fab-color-background-action-primary-default); color: var(--fab-color-text-inversed); border-color: transparent; }
-  .btn-primary:hover { background: var(--fab-color-background-action-primary-hover); box-shadow: var(--fab-shadow-elevation-2); }
-  .btn-primary:active { background: var(--fab-color-background-action-primary-pressed); box-shadow: none; }
-  .btn-primary:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
-  /* Secondary */
-  .btn-secondary { background: var(--fab-color-background-action-secondary-default); color: var(--fab-color-text-brand); border-color: var(--fab-color-border-action-outline-default); }
-  .btn-secondary:hover { background: var(--fab-color-background-action-secondary-hover); box-shadow: var(--fab-shadow-elevation-2); }
-  .btn-secondary:active { background: var(--fab-color-background-action-secondary-pressed); box-shadow: none; }
-  .btn-secondary:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
-  /* Ghost = Tertiary outline (white bg, gray border) */
-  .btn-ghost { background: var(--fab-color-background-action-tertiary-outline-default); color: var(--fab-color-text-default); border-color: var(--fab-color-border-action-outline-tertiary); }
-  .btn-ghost:hover { background: var(--fab-color-background-action-tertiary-outline-hover); box-shadow: var(--fab-shadow-elevation-2); }
-  .btn-ghost:active { background: var(--fab-color-background-action-tertiary-outline-pressed); box-shadow: none; }
-  .btn-ghost:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
-  /* Danger */
-  .btn-danger { background: var(--fab-color-background-action-danger-default); color: var(--fab-color-text-inversed); border-color: transparent; }
-  .btn-danger:hover { background: var(--fab-color-background-action-danger-hover); box-shadow: var(--fab-shadow-elevation-2); }
-  .btn-danger:active { background: var(--fab-color-background-action-danger-pressed); box-shadow: none; }
-  .btn-danger:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
-  /* Warning / Success */
-  .btn-warning { background: var(--fab-color-status-warning-alt-default); color: var(--fab-color-text-inversed); border-color: transparent; }
-  .btn-success { background: var(--fab-color-status-success-default); color: var(--fab-color-text-inversed); border-color: transparent; }
-  .btn-sm { padding: 4px 10px; font-size: 12px; line-height: 18px; }
-  .btn:disabled, .btn[disabled] { background: var(--fab-color-background-action-disabled); color: var(--fab-color-text-action-disabled); border-color: var(--fab-color-border-action-outline-disabled); cursor: not-allowed; box-shadow: none; pointer-events: none; }
-
-  /* ─── Coordinate panel ─── */
-  .coord-panel {
-    background: var(--fab-color-background-page-subdued);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    border-radius: var(--fab-border-radius-card-m);
-    padding: 14px var(--fab-spacing-m);
-    margin-bottom: 20px;
-  }
-  .coord-panel-title {
-    font-size: 11px; font-weight: 700;
-    color: var(--fab-color-text-default);
-    text-transform: uppercase; letter-spacing: .5px;
-    margin-bottom: 10px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .coord-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto auto;
-    gap: 10px; align-items: end;
-  }
-  .coord-status-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px var(--fab-spacing-xs); border-radius: var(--fab-border-radius-rounded);
-    font-size: 11px; font-weight: 600;
-  }
-  .coord-status-badge.geocoded { background: var(--fab-color-background-success); color: var(--fab-color-status-success-default); }
-  .coord-status-badge.manual   { background: var(--fab-color-background-warning);  color: var(--fab-color-status-warning-alt-default); }
-  .coord-status-badge.none     { background: var(--fab-color-background-page-subdued); color: var(--fab-color-text-subdued); border: var(--fab-border-width-xxs) solid var(--fab-color-border-default); }
-
-  /* ─── Map panel ─── */
-  .map-card { overflow: hidden; border-radius: var(--fab-border-radius-card-l); }
-  .map-container {
-    height: 320px;
-    width: 100%;
-    position: relative;
-  }
-  #map { width: 100%; height: 100%; }
-
-  /* Scroll-to-zoom gate overlay */
-  .map-scroll-gate {
-    position: absolute;
-    inset: 0;
-    z-index: 500;
-    background: rgba(0, 0, 0, 0.50);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 200ms ease;
-    border-radius: 0;
-  }
-  .map-scroll-gate.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .map-scroll-gate-msg {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 22px;
-    letter-spacing: 0.35px;
-    background: rgba(0,0,0,0.55);
-    padding: 10px 18px;
-    border-radius: 8px;
-    text-align: center;
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .map-toolbar {
-    padding: 10px 14px;
-    background: var(--fab-color-background-page-subdued);
-    border-top: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    display: flex; align-items: center; gap: var(--fab-spacing-xs);
-    flex-wrap: wrap;
-  }
-  .map-toolbar-label {
-    font-size: 11px; font-weight: 600;
-    color: var(--fab-color-text-subdued); text-transform: uppercase; letter-spacing: .4px;
-    flex-shrink: 0;
-  }
-
-  .map-mode-btn {
-    padding: 4px 10px;
-    border-radius: var(--fab-border-radius-action-m);
-    font-size: 12px;
-    font-weight: 500;
-    border: var(--fab-border-width-action-default) solid var(--fab-color-border-action-outline-tertiary);
-    background: var(--fab-color-background-elevation-1);
-    color: var(--fab-color-text-default);
-    cursor: pointer; transition: all var(--fab-transition-duration-action-states);
-  }
-  .map-mode-btn.active { background: var(--fab-color-background-action-primary-default); color: var(--fab-color-text-inversed); border-color: var(--fab-color-background-action-primary-default); }
-  .map-mode-btn:hover:not(.active) { background: var(--fab-color-background-action-secondary-hover); color: var(--fab-color-text-brand); border-color: var(--fab-color-border-action-outline-default); }
-
-  .map-info-strip {
-    padding: var(--fab-spacing-xs) 14px;
-    font-size: 11.5px;
-    color: var(--fab-color-text-subdued);
-    background: var(--fab-color-background-elevation-1);
-    border-top: var(--fab-border-width-xxs) solid var(--fab-color-divider-thin);
-    display: flex; align-items: center; gap: 6px;
-    min-height: 32px;
-  }
-
-  /* ─── Toast notification ─── */
-  #toast-container {
-    position: fixed; bottom: var(--fab-spacing-l); right: var(--fab-spacing-l);
-    z-index: 9999; display: flex; flex-direction: column; gap: var(--fab-spacing-xs);
-  }
-  .toast {
-    padding: var(--fab-spacing-s) var(--fab-spacing-m);
-    border-radius: var(--fab-border-radius-message-m);
-    box-shadow: var(--fab-shadow-elevation-8);
-    font-size: 13px; font-weight: 500;
-    display: flex; align-items: center; gap: 10px;
-    min-width: 260px; max-width: 380px;
-    animation: slideIn .25s ease;
-    transition: opacity .3s;
-  }
-  .toast.success { background: var(--fab-color-status-success-default);       color: var(--fab-color-text-inversed); }
-  .toast.warning { background: var(--fab-color-status-warning-alt-default);   color: var(--fab-color-text-inversed); }
-  .toast.error   { background: var(--fab-color-status-danger-default);        color: var(--fab-color-text-inversed); }
-  .toast.info    { background: var(--fab-color-background-action-primary-pressed); color: var(--fab-color-text-inversed); }
-  @keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-  /* ─── Field data model reference tab ─── */
-  .model-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--fab-spacing-m);
-  }
-  @media (max-width: 800px) { .model-grid { grid-template-columns: 1fr 1fr; } }
-
-  .model-card {
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    border-radius: var(--fab-border-radius-card-m);
-    overflow: hidden;
-    background: var(--fab-color-background-elevation-1);
-  }
-  .model-card-head {
-    background: var(--fab-color-background-action-primary-default);
-    color: var(--fab-color-text-inversed);
-    padding: var(--fab-spacing-xs) var(--fab-spacing-s);
-    font-size: 12px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .4px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .model-card-body { padding: 10px var(--fab-spacing-s); }
-  .model-field-row {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    padding: 5px 0;
-    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-divider-thin);
-    gap: var(--fab-spacing-xs);
-  }
-  .model-field-row:last-child { border-bottom: none; }
-  .model-field-name { font-size: 12px; font-weight: 600; color: var(--fab-color-text-default); font-family: 'Consolas', monospace; }
-  .model-field-type {
-    font-size: 10px; padding: 1px 5px; border-radius: var(--fab-border-radius-chip-m);
-    font-weight: 700; text-transform: uppercase; flex-shrink: 0;
-  }
-  .type-str  { background: var(--fab-comp-chip-color-background-regular-blue);   color: var(--fab-comp-chip-color-foreground-regular-blue); }
-  .type-enum { background: var(--fab-comp-chip-color-background-regular-purple); color: var(--fab-comp-chip-color-foreground-regular-purple); }
-  .type-num  { background: var(--fab-comp-chip-color-background-regular-yellow); color: var(--fab-comp-chip-color-foreground-regular-yellow); }
-  .type-bool { background: var(--fab-comp-chip-color-background-regular-green);  color: var(--fab-comp-chip-color-foreground-regular-green); }
-  .type-ref  { background: var(--fab-comp-chip-color-background-regular-red);    color: var(--fab-comp-chip-color-foreground-regular-red); }
-  .model-field-desc { font-size: 11px; color: var(--fab-color-text-subdued); margin-top: 2px; }
-
-  .tag {
-    display: inline-flex; align-items: center; gap: 3px;
-    padding: 2px 7px; border-radius: var(--fab-border-radius-rounded);
-    font-size: 10.5px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .2px;
-  }
-  .tag-new     { background: var(--fab-comp-chip-color-background-subtle-marine); color: var(--fab-comp-chip-color-foreground-subtle-marine); }
-  .tag-enhance { background: var(--fab-color-background-success); color: var(--fab-color-status-success-default); }
-  .tag-remove  { background: var(--fab-color-background-danger);  color: var(--fab-color-status-danger-default); }
-
-  /* ─── Status bar ─── */
-  .status-bar {
-    align-items: center; gap: var(--fab-spacing-xs);
-    padding: var(--fab-spacing-xs) 14px;
-    background: var(--fab-color-background-success);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-success);
-    border-radius: var(--fab-border-radius-message-m);
-    font-size: 12px; color: var(--fab-color-status-success-default);
-    font-weight: 500;
-    margin-top: var(--fab-spacing-m);
-    display: none;
-  }
-  .status-bar.visible { display: flex; }
-
-  /* ─── Map action panel (embedded in coords card) ─── */
-  .map-panel-state { display: none; }
-  .map-panel-state.active { display: block; }
-
-  .map-panel-idle {
-    padding: 14px;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
-  }
-  .map-panel-coord-val {
-    font-size: 14px; font-weight: 700; color: var(--fab-color-text-brand);
-    font-family: monospace; line-height: 1.3;
-  }
-  .map-panel-coord-lbl {
-    font-size: 10px; color: var(--fab-color-text-subdued); text-transform: uppercase; letter-spacing: .3px;
-  }
-
-  .map-panel-pending {
-    border-top: var(--fab-border-width-s) solid var(--fab-color-status-warning-alt-default);
-  }
-  .map-panel-pending-header {
-    background: var(--fab-color-background-warning);
-    padding: 10px 14px;
-    display: flex; align-items: center; gap: var(--fab-spacing-xs);
-    font-size: 12.5px; font-weight: 600; color: var(--fab-color-status-warning-alt-default);
-    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-status-warning-alt-default);
-  }
-  .map-panel-pending-body { padding: var(--fab-spacing-s) 14px; }
-  .map-panel-pending-coords {
-    display: grid; grid-template-columns: 1fr 1fr; gap: var(--fab-spacing-xs);
-    margin-bottom: var(--fab-spacing-s);
-  }
-  .map-panel-actions {
-    display: flex; gap: 7px; flex-wrap: wrap;
-  }
-
-  .map-panel-result-header {
-    background: var(--fab-color-background-info);
-    padding: 10px 14px;
-    display: flex; align-items: center; gap: var(--fab-spacing-xs);
-    font-size: 12.5px; font-weight: 600; color: var(--fab-color-text-brand);
-    border-bottom: var(--fab-border-width-xxs) solid var(--fab-color-border-info);
-  }
-  .map-panel-result-body { padding: var(--fab-spacing-s) 14px; }
-
-  .map-panel-loading {
-    padding: 20px 14px;
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; color: var(--fab-color-text-subdued); font-size: 13px;
-  }
-  .spin {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(255,255,255,.3);
-    border-top-color: var(--fab-color-text-inversed);
-    border-radius: 50%;
-    animation: spin .6s linear infinite;
-    display: inline-block;
-  }
-  .spin.dark {
-    border: 2px solid var(--fab-color-border-default);
-    border-top-color: var(--fab-color-border-brand);
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ─── Disclaimer banner ─── */
-  .info-banner {
-    display: flex; gap: 10px; align-items: flex-start;
-    background: var(--fab-color-background-info);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-info);
-    border-radius: var(--fab-border-radius-message-m);
-    padding: var(--fab-spacing-s) 14px;
-    margin-bottom: 20px;
-    font-size: 12.5px;
-    color: var(--fab-color-text-brand);
-    line-height: 1.5;
-  }
-  .info-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-
-  /* ─── Search info popover ─── */
-  .search-info-btn {
-    flex-shrink: 0;
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px;
-    border-radius: var(--fab-border-radius-action-m);
-    border: none
-    background: var(--fab-color-background-action-tertiary-outline-default);
-    color: var(--fab-color-text-subdued);
-    cursor: pointer;
-    font-size: 14px;
-    line-height: 1;
-    transition: background var(--fab-transition-duration-action-states);
-    position: relative;
-  }
-  .search-info-btn:hover { background: var(--fab-color-background-action-tertiary-outline-hover); }
-  .search-info-btn:focus-visible { outline: 2px solid var(--fab-color-outline-focus-default); outline-offset: 3px; }
-  .search-info-popover {
-    display: none;
-    position: fixed;
-    z-index: 2000;
-    width: 300px;
-    background: var(--fab-color-background-elevation-1);
-    border: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
-    border-radius: var(--fab-border-radius-card-m);
-    box-shadow: var(--fab-shadow-elevation-4);
-    padding: var(--fab-spacing-s) 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--fab-color-text-default);
-  }
-  .search-info-popover.open { display: block; }
-</style>
 </head>
 <body>
 
@@ -688,25 +32,24 @@
   </div>
 </div>
 
-<!-- ─── Breadcrumb ─── -->
-<div class="breadcrumb">
-  <a href="#">Supporting Data</a>
-  <span class="breadcrumb-sep">/</span>
-  <a href="#">Countries &amp; Cities</a>
-  <span class="breadcrumb-sep">/</span>
-  <span class="breadcrumb-current">Geographic Location — Amsterdam HQ</span>
-  <div class="page-actions" style="margin-left:auto">
-    <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
-    <button class="btn btn-primary" onclick="saveRecord()">Save</button>
-  </div>
-</div>
-
 <!-- ─── Page ─── -->
 <div class="page">
   <div class="page-header">
-    <div>
+    <div class="page-header-main">
+      <div class="breadcrumb">
+        <a href="#">Supporting Data</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="#">Countries &amp; Cities</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Geographic Location — Amsterdam HQ</span>
+      </div>
       <div class="page-title">Geographic Location</div>
       <div class="page-subtitle">Property: Amsterdam HQ &nbsp;·&nbsp; Business Object: Property &nbsp;·&nbsp; Module: Real Estate Management</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+      <button class="btn btn-ghost" id="pending-cancel-btn" onclick="cancelPending()" disabled>Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Save</button>
     </div>
   </div>
 
@@ -749,10 +92,6 @@
               <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
               </div>
             </div>
-
-            <div id="validation-status" class="status-bar">
-              ✅ Address validated and geocoded via OpenStreetMap Nominatim
-            </div>
           </div>
           <div class="map-container" style="border-top:var(--fab-border-width-xxs) solid var(--fab-color-border-default)">
             <div id="map"></div>
@@ -778,7 +117,7 @@
                     <div class="map-panel-coord-val" id="pin-lng-display">—</div>
                   </div>
                 </div>
-                <div style="padding:0 14px 10px;font-size:11.5px;color:var(--planon-gray-500)" id="address-lock-info">
+                <div id="address-lock-info" class="status-bar status-neutral visible">
                   <span style="color:var(--planon-gray-300)">⬡</span> Address not validated
                 </div>
               </div>
@@ -803,7 +142,6 @@
                   <div class="map-panel-actions">
                     <button class="btn btn-primary btn-sm" onclick="startReverseFromPending()">Reverse Geocode &amp; Apply</button>
                     <button class="btn btn-secondary btn-sm" onclick="commitCoordsOnly()">Coordinates Only</button>
-                    <button class="btn btn-ghost btn-sm" onclick="cancelPending()">Cancel</button>
                   </div>
                 </div>
               </div>
@@ -827,7 +165,6 @@
                   <div class="map-panel-actions">
                     <button class="btn btn-success btn-sm" onclick="applyReverseResult()">Apply all fields</button>
                     <button class="btn btn-ghost btn-sm" onclick="showMapPanelState('pending')">Back</button>
-                    <button class="btn btn-ghost btn-sm" onclick="cancelPending()">Cancel</button>
                   </div>
                 </div>
               </div>
@@ -836,10 +173,10 @@
         </div>
 
         <!-- Coordinates + Map Actions -->
-        <div class="card">
-          <div class="card-header">
+        <details class="card accordion-card" id="geo-coords-accordion">
+          <summary class="card-header accordion-summary">
             <span class="card-header-title">Geospatial Coordinates</span>
-          </div>
+          </summary>
           <div class="card-body">
             <div class="coord-panel">
               <div class="coord-panel-title">
@@ -859,10 +196,10 @@
                     step="0.000001" min="-180" max="180"
                     oninput="onManualCoordChange()" />
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="applyManualCoords()" title="Move map pin to these coordinates">Apply to Map</button>
-                <button class="btn btn-ghost btn-sm" onclick="reverseGeocodeManualCoords()" title="Reverse geocode these coordinates">Reverse Geocode</button>
               </div>
               <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="applyManualCoords()" title="Move map pin to these coordinates">Apply to Map</button>
+                <button class="btn btn-ghost btn-sm" onclick="reverseGeocodeManualCoords()" title="Reverse geocode these coordinates">Reverse Geocode</button>
                 <button class="btn btn-ghost btn-sm" onclick="resetCoordinatesToAddress()">Reset to Address</button>
                 <span id="coord-source-label" style="font-size:11px;color:var(--planon-gray-500);margin-left:auto"></span>
               </div>
@@ -891,7 +228,7 @@
             </div>
 
           </div>
-        </div>
+        </details>
       </div>
 
       <!-- RIGHT: Structured Address Fields -->
@@ -904,7 +241,7 @@
 
             <div class="section-title">Street &amp; Building</div>
             <div class="field-group cols-6">
-              <div class="field" style="grid-column: span 3>
+              <div class="field" style="grid-column: span 3">
                 <label class="field-label">Street Name</label>
                 <input type="text" id="f-street-name" placeholder="e.g. Herengracht" />
               </div>
@@ -927,7 +264,7 @@
                 <input type="text" id="f-line1" placeholder="Full street address line 1" />
               </div>
             </div>
-            <div class="field-group cols-1" style="margin-bottom:0">
+            <div class="field-group cols-1" style="margin-bottom:20px">
               <div class="field">
                 <label class="field-label">Address Line 2 <span class="info-badge" style="margin-left:4px">Optional</span></label>
                 <input type="text" id="f-line2" placeholder="Suite, building name, campus…" />
@@ -1173,6 +510,9 @@ let pendingLat = null, pendingLng = null;        // placed but not yet confirmed
 let addressValidated = false;
 let pendingReverseResult = null;
 let searchDebounce = null;
+let pinChangeUndoSnapshot = null;
+let hasCancelablePinChange = false;
+let isApplyingPinChange = false;
 
 const adminLabels = {
   // countryCode -> [L1 label, L1 example, L2 label, L2 example, L3 label, L3 example]
@@ -1226,6 +566,7 @@ function initMap() {
   marker.on('dragend', function(e) {
     const pos = e.target.getLatLng();
     setPendingPin(pos.lat, pos.lng);
+    startReverseFromPending(true);
   });
 
   map.getContainer().style.cursor = 'crosshair';
@@ -1242,6 +583,7 @@ function initMap() {
       return;
     }
     setPendingPin(e.latlng.lat, e.latlng.lng);
+    startReverseFromPending(true);
   });
 
   // Scroll-to-zoom gate
@@ -1292,10 +634,12 @@ function placeMarkerAt(lat, lng, accuracy) {
   updatePinDisplay(lat, lng);
   updateMapInfoStrip();
   showMapPanelState('idle');
+  updatePendingCancelButton();
 }
 
 /* Move marker to PENDING (orange) — does NOT update any fields */
 function setPendingPin(lat, lng) {
+  capturePinUndoSnapshot();
   pendingLat = lat; pendingLng = lng;
   marker.setLatLng([lat, lng]);
   marker.setIcon(makeIcon(true));
@@ -1304,8 +648,9 @@ function setPendingPin(lat, lng) {
   document.getElementById('pending-lat-display').textContent = lat.toFixed(6);
   document.getElementById('pending-lng-display').textContent = lng.toFixed(6);
   document.getElementById('map-info-strip').innerHTML =
-    '<span style="color:var(--planon-orange)">●</span> Pending — confirm or cancel below';
+    '<span style="color:var(--planon-orange)">●</span> Pending — confirm below or cancel next to Save';
   showMapPanelState('pending');
+  updatePendingCancelButton();
 }
 
 /* Commit coords only — no address update */
@@ -1327,10 +672,17 @@ function commitCoordsOnly() {
   updateAddressLockInfo();
   document.getElementById('coord-source-label').textContent = '📌 Manual pin';
   showMapPanelState('idle');
+  updatePendingCancelButton();
 }
 
 /* Cancel pending — snap marker back */
 function cancelPending() {
+  if (pendingLat === null && hasCancelablePinChange) {
+    restorePinUndoSnapshot();
+    toast('↩ Pin-based address changes reverted', 'info');
+    return;
+  }
+
   pendingLat = null; pendingLng = null;
   pendingReverseResult = null;
   if (currentLat !== null) {
@@ -1340,8 +692,97 @@ function cancelPending() {
   } else {
     marker.setOpacity(0);
   }
+
+  if (!hasCancelablePinChange) {
+    pinChangeUndoSnapshot = null;
+  }
+
   updateMapInfoStrip();
   showMapPanelState('idle');
+  updatePendingCancelButton();
+}
+
+function capturePinUndoSnapshot() {
+  const fields = Array.from(document.querySelectorAll('[id^="f-"]')).map(el => ({
+    id: el.id,
+    value: ('value' in el) ? el.value : '',
+    className: el.className
+  }));
+
+  const coordBadge = document.getElementById('coord-status-badge');
+  const addressLockInfoEl = document.getElementById('address-lock-info');
+
+  pinChangeUndoSnapshot = {
+    fields,
+    addressSearch: document.getElementById('address-search').value,
+    addressLockInfoClassName: addressLockInfoEl.className,
+    coordSourceLabel: document.getElementById('coord-source-label').textContent,
+    addressLockInfo: addressLockInfoEl.innerHTML,
+    coordBadgeClass: coordBadge.className,
+    coordBadgeText: coordBadge.textContent,
+    pinLatDisplay: document.getElementById('pin-lat-display').textContent,
+    pinLngDisplay: document.getElementById('pin-lng-display').textContent,
+    currentLat,
+    currentLng,
+    validatedLat,
+    validatedLng,
+    addressValidated
+  };
+}
+
+function restorePinUndoSnapshot() {
+  if (!pinChangeUndoSnapshot) return;
+
+  pinChangeUndoSnapshot.fields.forEach(({ id, value, className }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if ('value' in el) el.value = value;
+    el.className = className;
+  });
+
+  document.getElementById('address-search').value = pinChangeUndoSnapshot.addressSearch;
+  document.getElementById('coord-source-label').textContent = pinChangeUndoSnapshot.coordSourceLabel;
+  const addressLockInfoEl = document.getElementById('address-lock-info');
+  addressLockInfoEl.className = pinChangeUndoSnapshot.addressLockInfoClassName;
+  addressLockInfoEl.innerHTML = pinChangeUndoSnapshot.addressLockInfo;
+
+  const coordBadge = document.getElementById('coord-status-badge');
+  coordBadge.className = pinChangeUndoSnapshot.coordBadgeClass;
+  coordBadge.textContent = pinChangeUndoSnapshot.coordBadgeText;
+
+  document.getElementById('pin-lat-display').textContent = pinChangeUndoSnapshot.pinLatDisplay;
+  document.getElementById('pin-lng-display').textContent = pinChangeUndoSnapshot.pinLngDisplay;
+
+  currentLat = pinChangeUndoSnapshot.currentLat;
+  currentLng = pinChangeUndoSnapshot.currentLng;
+  validatedLat = pinChangeUndoSnapshot.validatedLat;
+  validatedLng = pinChangeUndoSnapshot.validatedLng;
+  addressValidated = pinChangeUndoSnapshot.addressValidated;
+
+  pendingLat = null;
+  pendingLng = null;
+  pendingReverseResult = null;
+
+  if (currentLat !== null && currentLng !== null) {
+    marker.setLatLng([currentLat, currentLng]);
+    marker.setIcon(makeIcon(false));
+    marker.setOpacity(1);
+  } else {
+    marker.setOpacity(0);
+  }
+
+  updateMapInfoStrip();
+  showMapPanelState('idle');
+
+  hasCancelablePinChange = false;
+  pinChangeUndoSnapshot = null;
+  updatePendingCancelButton();
+}
+
+function updatePendingCancelButton() {
+  const btn = document.getElementById('pending-cancel-btn');
+  if (!btn) return;
+  btn.disabled = (pendingLat === null && !hasCancelablePinChange);
 }
 
 /* Switch panel state */
@@ -1416,7 +857,7 @@ function resetCoordinatesToAddress() {
 /* ════════════════════════════════════════════════════════════
    REVERSE GEOCODING
 ════════════════════════════════════════════════════════════ */
-async function startReverseFromPending() {
+async function startReverseFromPending(autoApply = false) {
   if (pendingLat === null) return;
   showMapPanelState('loading');
   try {
@@ -1425,6 +866,10 @@ async function startReverseFromPending() {
     const data = await res.json();
     if (data.error) { showMapPanelState('pending'); toast('No address found at this location', 'warning'); return; }
     pendingReverseResult = data;
+    if (autoApply) {
+      applyReverseResult();
+      return;
+    }
     renderReverseResult(data, pendingLat, pendingLng);
     showMapPanelState('result');
   } catch(e) {
@@ -1475,9 +920,13 @@ function applyReverseResult() {
   validatedLat = lat; validatedLng = lng;
   pendingLat = null; pendingLng = null;
   marker.setIcon(makeIcon(false));
+  isApplyingPinChange = true;
   populateFromResult(pendingReverseResult);
+  isApplyingPinChange = false;
+  hasCancelablePinChange = true;
   pendingReverseResult = null;
   showMapPanelState('idle');
+  updatePendingCancelButton();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1783,6 +1232,12 @@ document.addEventListener('click', e => {
    POPULATE FIELDS FROM NOMINATIM RESULT
 ════════════════════════════════════════════════════════════ */
 function populateFromResult(r) {
+  if (!isApplyingPinChange) {
+    pinChangeUndoSnapshot = null;
+    hasCancelablePinChange = false;
+    updatePendingCancelButton();
+  }
+
   const a = r.address || {};
   const lat = parseFloat(r.lat);
   const lng = parseFloat(r.lon);
@@ -1830,7 +1285,6 @@ function populateFromResult(r) {
 
   // Update UI state
   addressValidated = true;
-  document.getElementById('validation-status').classList.add('visible');
   document.getElementById('coord-source-label').textContent = '✅ Source: OpenStreetMap Nominatim';
   updateAddressLockInfo();
 
@@ -1885,11 +1339,14 @@ function updateAddressLockInfo() {
   if (addressValidated) {
     const pinMoved = (validatedLat && currentLat && (Math.abs(currentLat - validatedLat) > 0.0001 || Math.abs(currentLng - validatedLng) > 0.0001));
     if (pinMoved) {
+      el.className = 'status-bar status-warning visible';
       el.innerHTML = '<span style="color:var(--planon-warn)">⚠</span> Pin moved from validated address location';
     } else {
-      el.innerHTML = '<span style="color:var(--planon-success)">✅</span> Pin matches validated address';
+      el.className = 'status-bar status-success visible';
+      el.innerHTML = '<span style="color:var(--planon-success)">✅</span> Address validated and pin matches geocoded location';
     }
   } else {
+    el.className = 'status-bar status-neutral visible';
     el.innerHTML = '<span style="color:var(--planon-gray-300)">⬡</span> Address not validated';
   }
 }
@@ -1986,14 +1443,17 @@ function clearAll() {
   map.setView([20, 0], 2);
   currentLat = null; currentLng = null; validatedLat = null; validatedLng = null;
   addressValidated = false;
-  document.getElementById('validation-status').classList.remove('visible');
   setCoordBadge('none');
   document.getElementById('pin-lat-display').textContent = '—';
   document.getElementById('pin-lng-display').textContent = '—';
-  document.getElementById('address-lock-info').innerHTML = '<span style="color:var(--planon-gray-300)">⬡</span> Address not validated';
+  updateAddressLockInfo();
   document.getElementById('coord-source-label').textContent = '';
   pendingLat = null; pendingLng = null; pendingReverseResult = null;
+  pinChangeUndoSnapshot = null;
+  hasCancelablePinChange = false;
+  isApplyingPinChange = false;
   showMapPanelState('idle');
+  updatePendingCancelButton();
   updateAdminLabels('');
   toast('Form cleared', 'info');
 }
@@ -2002,6 +1462,9 @@ function saveRecord() {
   const city = document.getElementById('f-city').value;
   const country = document.getElementById('f-country').value;
   if (!city || !country) { toast('⚠ City and Country are required', 'error'); return; }
+  pinChangeUndoSnapshot = null;
+  hasCancelablePinChange = false;
+  updatePendingCancelButton();
   toast('💾 Record saved successfully', 'success');
 }
 
