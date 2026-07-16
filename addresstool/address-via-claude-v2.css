@@ -208,6 +208,7 @@
   .field-group.cols-1 { --cols: 1; }
   .field-group.cols-3 { --cols: 3; }
   .field-group.cols-4 { --cols: 4; }
+  .field-group.cols-6 { --cols: 6; }
 
   .field { display: flex; flex-direction: column; gap: 5px; }
   .field.full { grid-column: 1 / -1; }
@@ -993,7 +994,7 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-  }
+  
     background: var(--planon-gray-100);
     padding: 1px 4px;
     border-radius: 3px;
@@ -1027,7 +1028,7 @@
   /* ─── Layout improvements: 3-column grid with saved list left, map center, form right ─── */
   .main-grid {
     display: grid;
-    grid-template-columns: 360px 1fr 500px;
+    grid-template-columns: 360px 1fr 420px;
     grid-auto-rows: auto;
     gap: 20px;
     align-items: start;
@@ -1095,10 +1096,10 @@
   /* ─── Responsive behaviour ─── */
   @media (max-width: 1400px) {
     .main-grid {
-      grid-template-columns: 320px 1fr 420px;
+      grid-template-columns: 320px 1fr 360px;
     }
     .main-left .map-container {
-      height: 400px;
+      height: 460px;
     }
   }
 
@@ -1145,5 +1146,21 @@
     }
     .page-actions {
       position: static;
+    }
+  }
+
+  @media (min-width: 1101px) {
+    /* Give the structured fields card one additional column for every multi-column group */
+    .structured-address-card .field-group:not(.cols-1):not(.cols-3):not(.cols-4):not(.cols-6) {
+      --cols: 3;
+    }
+    .structured-address-card .field-group.cols-3 {
+      --cols: 4;
+    }
+    .structured-address-card .field-group.cols-4 {
+      --cols: 5;
+    }
+    .structured-address-card .field-group.cols-6 {
+      --cols: 7;
     }
   }
