@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="referrer" content="origin" />
 <title>Planon — Geographic Location Management</title>
 
 <!-- Fabric design system tokens -->
@@ -22,7 +23,7 @@
   <div class="topbar-topline"></div>
   <div class="topbar-container">
     <div class="topbar-logo">
-      <img src="planon-light-logo.png" alt="Planon" style="height:28px;width:auto;display:block;" />
+      <img src="planon-light-logo.png" alt="Planon" class="topbar-logo img" />
     </div>
     <div class="topbar-right">
       <span>Supporting Data</span>
@@ -64,9 +65,9 @@
     <div class="main-grid">
 
       <!-- LEFT: Search+Map & Coordinates -->
-      <div>
+      <div class="main-left">
         <!-- Combined Search + Map card -->
-        <div class="card" style="margin-bottom:18px;overflow:hidden">
+        <div class="card card-with-bottom-margin">
           <div class="card-header">
             <span class="card-header-title">Address Search &amp; Autocomplete</span>
             
@@ -80,7 +81,7 @@
                   <circle cx="7" cy="3.75" r="0.875" fill="currentColor"/>
                 </svg>
               </button>
-              <div style="position:relative;flex:1;min-width:0">
+              <div class="layout-relative-flex">
               <input type="text" class="search-input" id="address-search"
                 placeholder="e.g.  Eiffel Tower, Paris  ·  1600 Pennsylvania Ave  ·  Schiphol Airport"
                 autocomplete="off"
@@ -93,17 +94,17 @@
               </div>
             </div>
           </div>
-          <div class="map-container" style="border-top:var(--fab-border-width-xxs) solid var(--fab-color-border-default)">
+          <div class="map-container panel-with-top-border">
             <div id="map"></div>
             <div class="map-scroll-gate" id="map-scroll-gate">
-              <div class="map-scroll-gate-msg" id="map-scroll-gate-msg">Use <kbd style="font:inherit;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:4px;padding:1px 6px">⌘</kbd> + scroll to zoom</div>
+              <div class="map-scroll-gate-msg" id="map-scroll-gate-msg">Use <kbd class="kbd-overlay-style">⌘</kbd> + scroll to zoom</div>
             </div>
           </div>
           <div class="map-info-strip" id="map-info-strip">
-            <span style="color:var(--planon-gray-300)">●</span> No location set — use address search or enter coordinates
+            <span class="text-gray-300">●</span> No location set — use address search or enter coordinates
           </div>
           <!-- Map pin states -->
-          <div id="map-action-panel" style="border-top: var(--fab-border-width-xxs) solid var(--fab-color-border-default);">
+          <div id="map-action-panel" class="panel-with-top-border">
 
               <!-- STATE: idle -->
               <div class="map-panel-state active" id="map-panel-idle">
@@ -118,25 +119,25 @@
                   </div>
                 </div>
                 <div id="address-lock-info" class="status-bar status-neutral visible">
-                  <span style="color:var(--planon-gray-300)">⬡</span> Address not validated
+                  <span class="text-gray-300">⬡</span> Address not validated
                 </div>
               </div>
 
               <!-- STATE: pending -->
               <div class="map-panel-state" id="map-panel-pending">
                 <div class="map-panel-pending-header">
-                  <span style="font-size:16px">📌</span>
+                  <span class="icon-emoji-lg">📌</span>
                   <span>New pin position — not yet applied</span>
                 </div>
                 <div class="map-panel-pending-body">
                   <div class="map-panel-pending-coords">
                     <div>
                       <div class="map-panel-coord-lbl">Latitude</div>
-                      <div class="map-panel-coord-val" id="pending-lat-display" style="color:var(--planon-orange)">—</div>
+                      <div class="map-panel-coord-val coord-val-pending" id="pending-lat-display">—</div>
                     </div>
                     <div>
                       <div class="map-panel-coord-lbl">Longitude</div>
-                      <div class="map-panel-coord-val" id="pending-lng-display" style="color:var(--planon-orange)">—</div>
+                      <div class="map-panel-coord-val coord-val-pending" id="pending-lng-display">—</div>
                     </div>
                   </div>
                   <div class="map-panel-actions">
@@ -156,12 +157,12 @@
               <!-- STATE: result -->
               <div class="map-panel-state" id="map-panel-result">
                 <div class="map-panel-result-header">
-                  <span style="font-size:16px">🔄</span>
+                  <span class="icon-emoji-lg">🔄</span>
                   <span>Reverse geocode result</span>
-                  <span style="margin-left:auto;font-size:11px;font-weight:400;color:var(--planon-gray-500)">Review &amp; confirm</span>
+                  <span class="text-result-label">Review &amp; confirm</span>
                 </div>
                 <div class="map-panel-result-body">
-                  <div id="map-panel-result-content" style="font-size:12.5px;line-height:1.6;color:var(--planon-gray-700);margin-bottom:12px"></div>
+                  <div id="map-panel-result-content" class="text-result-content"></div>
                   <div class="map-panel-actions">
                     <button class="btn btn-success btn-sm" onclick="applyReverseResult()">Apply all fields</button>
                     <button class="btn btn-ghost btn-sm" onclick="showMapPanelState('pending')">Back</button>
@@ -197,11 +198,11 @@
                     oninput="onManualCoordChange()" />
                 </div>
               </div>
-              <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <div class="layout-flex-col-wrap">
                 <button class="btn btn-secondary btn-sm" onclick="applyManualCoords()" title="Move map pin to these coordinates">Apply to Map</button>
                 <button class="btn btn-ghost btn-sm" onclick="reverseGeocodeManualCoords()" title="Reverse geocode these coordinates">Reverse Geocode</button>
                 <button class="btn btn-ghost btn-sm" onclick="resetCoordinatesToAddress()">Reset to Address</button>
-                <span id="coord-source-label" style="font-size:11px;color:var(--planon-gray-500);margin-left:auto"></span>
+                <span id="coord-source-label" class="text-xs-muted"></span>
               </div>
             </div>
 
@@ -232,7 +233,22 @@
       </div>
 
       <!-- RIGHT: Structured Address Fields -->
-      <div>
+      <details class="card" id="records-panel" open>
+        <summary class="card-header summary-flex-header">
+          <span class="card-header-title">Saved Addresses</span>
+          <div class="layout-flex-right">
+            <button class="btn btn-sm btn-ghost" onclick="newRecord()">+ New</button>
+            <button class="btn btn-sm btn-ghost" id="records-panel-toggle" onclick="toggleRecordsPanel(this)" aria-expanded="true" title="Collapse/Expand">▾</button>
+          </div>
+        </summary>
+        <div class="card-body">
+          <input type="text" id="records-filter" placeholder="Filter by city, street or country" oninput="renderRecordsList()" class="filter-input" aria-label="Filter saved addresses" />
+          <div id="records-list" role="list" aria-label="Saved addresses" class="records-list"></div>
+        </div>
+      </details>
+
+      <!-- RIGHT: Structured Address Fields -->
+      <div class="main-right">
         <div class="card">
           <div class="card-header">
             <span class="card-header-title">Structured Address Fields</span>
@@ -241,7 +257,7 @@
 
             <div class="section-title">Street &amp; Building</div>
             <div class="field-group cols-6">
-              <div class="field" style="grid-column: span 3">
+              <div class="field field-cols-span-3">
                 <label class="field-label">Street Name</label>
                 <input type="text" id="f-street-name" placeholder="e.g. Herengracht" />
               </div>
@@ -258,15 +274,15 @@
                 <input type="text" id="f-floor" placeholder="e.g. 3rd floor" />
               </div>
             </div>
-            <div class="field-group cols-1" style="margin-bottom:8px">
+            <div class="field-group cols-1 field-margin-bottom-8">
               <div class="field">
                 <label class="field-label">Address Line 1 <span class="required">*</span></label>
                 <input type="text" id="f-line1" placeholder="Full street address line 1" />
               </div>
             </div>
-            <div class="field-group cols-1" style="margin-bottom:20px">
+            <div class="field-group cols-1 field-margin-bottom-20">
               <div class="field">
-                <label class="field-label">Address Line 2 <span class="info-badge" style="margin-left:4px">Optional</span></label>
+                <label class="field-label">Address Line 2 <span class="info-badge status-indicator-badge">Optional</span></label>
                 <input type="text" id="f-line2" placeholder="Suite, building name, campus…" />
               </div>
             </div>
@@ -281,7 +297,7 @@
                 <label class="field-label">Postal Suffix</label>
                 <input type="text" id="f-postal-suffix" placeholder="ZIP+4, etc." />
               </div>
-              <div class="field" style="grid-column: span 2">
+              <div class="field field-cols-span-2">
                 <label class="field-label">City / Locality <span class="required">*</span></label>
                 <input type="text" id="f-city" placeholder="e.g. Amsterdam" />
               </div>
@@ -297,7 +313,7 @@
               </div>
             </div>
 
-            <div class="section-title">Administrative Divisions <span style="font-size:13px;font-weight:400;color:var(--fab-color-text-subdued);letter-spacing:0">— Labels adapt per country</span></div>
+            <div class="section-title">Administrative Divisions <span class="text-sm-section-label">— Labels adapt per country</span></div>
             <div class="field-group cols-1">
               <div class="field">
                 <label class="field-label" id="lbl-adm1">Admin Level 1 <span class="info-badge" id="lbl-adm1-eg">Province</span></label>
@@ -315,13 +331,13 @@
 
             <div class="section-title">Country &amp; Geopolitical Context</div>
             <div class="field-group cols-3">
-              <div class="field" style="grid-column: span 2">
+              <div class="field field-cols-span-2">
                 <label class="field-label">Country / Territory Display Name <span class="required">*</span></label>
                 <input type="text" id="f-country" placeholder="e.g. Netherlands" />
               </div>
               <div class="field">
                 <label class="field-label">ISO 3166-1 Code <span class="info-badge">Alpha-2</span></label>
-                <input type="text" id="f-country-code" placeholder="NL" maxlength="2" style="text-transform:uppercase" />
+                <input type="text" id="f-country-code" placeholder="NL" maxlength="2" class="field-uppercase-input" />
               </div>
             </div>
             <div class="field-group cols-3">
@@ -370,13 +386,13 @@
 
   <!-- ══════════════════════════════════════════════ TAB 2: Field Model -->
   <div class="tab-panel" id="panel-model">
-    <div class="info-banner" style="margin-bottom:20px">
+    <div class="info-banner field-margin-bottom-20">
       <span class="info-banner-icon">💡</span>
       <div>
         <strong>Global Geographic Field Model Proposal</strong> — This model addresses multinational flexibility, geopolitical sensitivity (e.g., Taiwan/Province vs Country), address inheritance, and modern geocoding integration.
-        <span class="tag tag-new" style="margin-left:6px">New fields</span>
-        <span class="tag tag-enhance" style="margin-left:4px">Enhanced</span>
-        <span class="tag tag-remove" style="margin-left:4px">Deprecated</span>
+        <span class="tag tag-new info-banner-tag">New fields</span>
+        <span class="tag tag-enhance tag-margin-left">Enhanced</span>
+        <span class="tag tag-remove tag-margin-left">Deprecated</span>
       </div>
     </div>
 
@@ -461,33 +477,33 @@
     </div>
 
     <!-- Design principles -->
-    <div style="margin-top:24px;background:var(--planon-white);border:1px solid var(--planon-gray-300);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm)">
+    <div class="emphasis-box">
       <div class="card-header">
         <span class="card-header-title">Design Principles &amp; Rationale</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-        <div style="padding:18px 20px;border-right:1px solid var(--planon-gray-100)">
+      <div class="layout-grid-cols-2">
+        <div class="pad-right-border">
           <div class="section-title">Geopolitical Neutrality</div>
-          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
-            The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">countryCode</code> stores a neutral ISO key that never changes regardless of political context. The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">geopoliticalContext</code> JSON field stores locale-specific display names, enabling Taiwan to appear as "Taiwan" for EU users and "台湾省" for users in China — both driven from the same underlying data record. The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">sovereigntyStatus</code> enum further disambiguates territories, SAR's, autonomous regions and disputed areas.
+          <p class="text-sm-title">
+            The <code>countryCode</code> stores a neutral ISO key that never changes regardless of political context. The <code>geopoliticalContext</code> JSON field stores locale-specific display names, enabling Taiwan to appear as "Taiwan" for EU users and "台湾省" for users in China — both driven from the same underlying data record. The <code>sovereigntyStatus</code> enum further disambiguates territories, SAR's, autonomous regions and disputed areas.
           </p>
         </div>
-        <div style="padding:18px 20px">
+        <div class="pad-default">
           <div class="section-title">Inheritance &amp; Staleness</div>
-          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
-            The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">inheritFromCity</code> flag, when enabled, propagates municipality, admin division, country, time zone, and currency from the City BO reference. When the City BO is updated (e.g. a municipality boundary changes), downstream BOs automatically show a <em>stale</em> validation status badge, prompting re-validation — preventing silent data drift across large portfolios.
+          <p class="text-sm-title">
+            The <code>inheritFromCity</code> flag, when enabled, propagates municipality, admin division, country, time zone, and currency from the City BO reference. When the City BO is updated (e.g. a municipality boundary changes), downstream BOs automatically show a <em>stale</em> validation status badge, prompting re-validation — preventing silent data drift across large portfolios.
           </p>
         </div>
-        <div style="padding:18px 20px;border-right:1px solid var(--planon-gray-100);border-top:1px solid var(--planon-gray-100)">
+        <div class="pad-right-top-border">
           <div class="section-title">Flexible Address Labels</div>
-          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
-            The three-level administrative hierarchy uses configurable label fields (<code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">adminLevel1Label</code>, etc.) driven by the country reference. A US property shows "State / County / Township"; a Dutch one shows "Province / Gemeente / Wijk"; a Japanese one shows "都道府県 / 市区町村". This eliminates hard-coded "State" or "Province" fields that confuse global users.
+          <p class="text-sm-title">
+            The three-level administrative hierarchy uses configurable label fields (<code>adminLevel1Label</code>, etc.) driven by the country reference. A US property shows "State / County / Township"; a Dutch one shows "Province / Gemeente / Wijk"; a Japanese one shows "都道府県 / 市区町村". This eliminates hard-coded "State" or "Province" fields that confuse global users.
           </p>
         </div>
-        <div style="padding:18px 20px;border-top:1px solid var(--planon-gray-100)">
+        <div class="pad-top-border">
           <div class="section-title">Coordinate Provenance</div>
-          <p style="font-size:13px;line-height:1.65;color:var(--planon-gray-700)">
-            The <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">coordinateAccuracy</code> and <code style="background:var(--planon-gray-100);padding:1px 4px;border-radius:3px;font-size:12px">coordinateSource</code> fields distinguish between auto-geocoded, GPS-surveyed, and manually pinned coordinates — critical for space utilisation analytics, IoT sensor placement, and emergency response routing. Moving the pin manually sets accuracy to <em>manual_pin</em> while preserving the validated postal address, preventing accidental data corruption.
+          <p class="text-sm-title">
+            The <code>coordinateAccuracy</code> and <code>coordinateSource</code> fields distinguish between auto-geocoded, GPS-surveyed, and manually pinned coordinates — critical for space utilisation analytics, IoT sensor placement, and emergency response routing. Moving the pin manually sets accuracy to <em>manual_pin</em> while preserving the validated postal address, preventing accidental data corruption.
           </p>
         </div>
       </div>
@@ -557,7 +573,8 @@ function initMap() {
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-    maxZoom: 19
+    maxZoom: 19,
+    crossOrigin: 'anonymous'
   }).addTo(map);
 
   marker = L.marker([20, 0], { icon: makeIcon(false), draggable: false }).addTo(map);
@@ -572,18 +589,40 @@ function initMap() {
   map.getContainer().style.cursor = 'crosshair';
   marker.dragging.disable();
 
+  // Double-click detection: delay pin placement to distinguish single click from double click
+  let lastClickTime = 0;
+  let clickTimeout = null;
+  const DOUBLE_CLICK_THRESHOLD = 300; // ms
+
   map.on('click', function(e) {
     if (pendingLat !== null) { cancelPending(); return; }
-    if (currentLat !== null) {
-      currentLat = null; currentLng = null;
-      marker.setOpacity(0);
-      updateMapInfoStrip();
-      showMapPanelState('idle');
-      setCoordBadge('none');
-      return;
+    
+    const now = Date.now();
+    const isDoubleClick = (now - lastClickTime) < DOUBLE_CLICK_THRESHOLD;
+    lastClickTime = now;
+
+    // If this might be part of a double-click, wait to see if another click arrives
+    if (isDoubleClick) {
+      if (clickTimeout) clearTimeout(clickTimeout);
+      return; // Skip first click of double-click
     }
-    setPendingPin(e.latlng.lat, e.latlng.lng);
-    startReverseFromPending(true);
+
+    // For potential single clicks, delay to check if double-click follows
+    if (clickTimeout) clearTimeout(clickTimeout);
+    
+    clickTimeout = setTimeout(() => {
+      // If we reach here without another click, it was a single click
+      if (currentLat !== null) {
+        currentLat = null; currentLng = null;
+        marker.setOpacity(0);
+        updateMapInfoStrip();
+        showMapPanelState('idle');
+        setCoordBadge('none');
+        return;
+      }
+      setPendingPin(e.latlng.lat, e.latlng.lng);
+      startReverseFromPending(true);
+    }, DOUBLE_CLICK_THRESHOLD);
   });
 
   // Scroll-to-zoom gate
@@ -1458,15 +1497,254 @@ function clearAll() {
   toast('Form cleared', 'info');
 }
 
+// Address records (simple localStorage-backed CRUD)
+let addressRecords = JSON.parse(localStorage.getItem('addresstool_records') || '[]');
+let currentRecordId = null;
+
 function saveRecord() {
   const city = document.getElementById('f-city').value;
   const country = document.getElementById('f-country').value;
   if (!city || !country) { toast('⚠ City and Country are required', 'error'); return; }
+
+  const rec = collectFormData();
+
+  if (!Array.isArray(addressRecords)) addressRecords = [];
+
+  if (currentRecordId) {
+    // update existing
+    const idx = addressRecords.findIndex(r => r.id === currentRecordId);
+    if (idx !== -1) {
+      rec.id = currentRecordId;
+      addressRecords[idx] = rec;
+    } else {
+      // fallback: push
+      rec.id = currentRecordId;
+      addressRecords.push(rec);
+    }
+  } else {
+    rec.id = 'r_' + Date.now();
+    addressRecords.push(rec);
+    currentRecordId = rec.id;
+  }
+
+  persistRecords();
+  renderRecordsList();
+
+  // If coordinates provided, show on map and mark as validated
+  if (rec.latitude && rec.longitude) {
+    validatedLat = parseFloat(rec.latitude);
+    validatedLng = parseFloat(rec.longitude);
+    placeMarkerAt(validatedLat, validatedLng, rec.coordinateAccuracy || 'manual');
+    setCurrentCoords(validatedLat, validatedLng, rec.coordinateAccuracy || 'manual', true);
+    addressValidated = true;
+    updateAddressLockInfo();
+  }
+
   pinChangeUndoSnapshot = null;
   hasCancelablePinChange = false;
   updatePendingCancelButton();
+
   toast('💾 Record saved successfully', 'success');
 }
+
+function persistRecords() {
+  localStorage.setItem('addresstool_records', JSON.stringify(addressRecords));
+}
+
+function loadRecords() {
+  try {
+    addressRecords = JSON.parse(localStorage.getItem('addresstool_records') || '[]') || [];
+  } catch(e) {
+    addressRecords = [];
+  }
+}
+
+function renderRecordsList() {
+  loadRecords();
+  const container = document.getElementById('records-list');
+  if (!container) return;
+  const q = (document.getElementById('records-filter')?.value || '').toLowerCase().trim();
+  container.innerHTML = '';
+  if (!addressRecords.length) {
+    container.innerHTML = '<div style="color:var(--planon-gray-500);padding:12px">No saved addresses yet — create one with <strong>New</strong> or by saving the form.</div>';
+    return;
+  }
+
+  addressRecords.forEach(r => {
+    const display = `${escHtml(r.addressLine1 || r.streetName || '')} ${escHtml(r.streetNumber || '')} — ${escHtml(r.locality || r.city || '')} ${escHtml(r.country || '')}`.trim();
+    if (q && !display.toLowerCase().includes(q) && !(r.id||'').toLowerCase().includes(q)) return;
+
+    const item = document.createElement('div');
+    item.className = 'record-item';
+    item.style.padding = '8px 6px';
+    item.style.borderBottom = '1px solid var(--fab-color-border-default)';
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+
+    const txt = document.createElement('div');
+    txt.style.flex = '1';
+    txt.style.fontSize = '13px';
+    txt.innerHTML = `<div style="font-weight:600">${display}</div><div style="font-size:12px;color:var(--planon-gray-500)">${escHtml(r.postalCode || r.postal || '')} ${escHtml(r.locality || r.city || '')}</div>`;
+    txt.setAttribute('tabindex','0');
+    txt.setAttribute('role','button');
+    txt.setAttribute('aria-label', display);
+    txt.onclick = () => selectRecord(r.id);
+    txt.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRecord(r.id); } };
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '6px';
+
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'btn btn-sm btn-ghost';
+    btnEdit.textContent = 'Edit';
+    btnEdit.onclick = (e) => { e.stopPropagation(); selectRecord(r.id); };
+
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'btn btn-sm btn-danger';
+    btnDelete.textContent = 'Delete';
+    btnDelete.onclick = (e) => { e.stopPropagation(); deleteRecord(r.id); };
+
+    actions.appendChild(btnEdit);
+    actions.appendChild(btnDelete);
+
+    item.appendChild(txt);
+    item.appendChild(actions);
+    container.appendChild(item);
+  });
+}
+
+function collectFormData() {
+  return {
+    id: currentRecordId || null,
+    streetName: document.getElementById('f-street-name').value || '',
+    streetNumber: document.getElementById('f-street-nr').value || '',
+    streetNumberSuffix: document.getElementById('f-street-suffix').value || '',
+    floor: document.getElementById('f-floor').value || '',
+    addressLine1: document.getElementById('f-line1').value || '',
+    addressLine2: document.getElementById('f-line2').value || '',
+    postalCode: document.getElementById('f-postal').value || '',
+    postalSuffix: document.getElementById('f-postal-suffix').value || '',
+    locality: document.getElementById('f-city').value || '',
+    sublocality: document.getElementById('f-sublocality').value || '',
+    municipality: document.getElementById('f-municipality').value || '',
+    adm1: document.getElementById('f-adm1').value || '',
+    adm2: document.getElementById('f-adm2').value || '',
+    adm3: document.getElementById('f-adm3').value || '',
+    country: document.getElementById('f-country').value || '',
+    countryCode: document.getElementById('f-country-code').value || '',
+    sovereignty: document.getElementById('f-sovereignty').value || '',
+    displayContext: document.getElementById('f-display-context').value || '',
+    continent: document.getElementById('f-continent').value || '',
+    latitude: document.getElementById('f-lat').value || '',
+    longitude: document.getElementById('f-lng').value || '',
+    altitude: document.getElementById('f-alt').value || '',
+    coordinateAccuracy: document.getElementById('f-coord-accuracy').value || '',
+    plusCode: document.getElementById('f-pluscode').value || ''
+  };
+}
+
+function selectRecord(id) {
+  loadRecords();
+  const r = addressRecords.find(x => x.id === id);
+  if (!r) { toast('Record not found', 'error'); return; }
+  populateFormFromRecord(r);
+  currentRecordId = r.id;
+  renderRecordsList();
+  toast('Loaded record for editing', 'info');
+}
+
+function populateFormFromRecord(r) {
+  setField('f-street-name', r.streetName || '');
+  setField('f-street-nr', r.streetNumber || '');
+  setField('f-street-suffix', r.streetNumberSuffix || '');
+  setField('f-floor', r.floor || '');
+  setField('f-line1', r.addressLine1 || '');
+  setField('f-line2', r.addressLine2 || '');
+  setField('f-postal', r.postalCode || '');
+  setField('f-postal-suffix', r.postalSuffix || '');
+  setField('f-city', r.locality || '');
+  setField('f-sublocality', r.sublocality || '');
+  setField('f-municipality', r.municipality || '');
+  setField('f-adm1', r.adm1 || '');
+  setField('f-adm2', r.adm2 || '');
+  setField('f-adm3', r.adm3 || '');
+  setField('f-country', r.country || '');
+  setField('f-country-code', (r.countryCode || '').toUpperCase());
+  setField('f-sovereignty', r.sovereignty || '');
+  setField('f-display-context', r.displayContext || '');
+  setField('f-continent', r.continent || '');
+  setField('f-lat', r.latitude || '');
+  setField('f-lng', r.longitude || '');
+  setField('f-alt', r.altitude || '');
+  setField('f-coord-accuracy', r.coordinateAccuracy || '');
+  setField('f-pluscode', r.plusCode || '');
+
+  // Set internal current coords
+  if (r.latitude && r.longitude) {
+    currentLat = parseFloat(r.latitude);
+    currentLng = parseFloat(r.longitude);
+    validatedLat = parseFloat(r.latitude);
+    validatedLng = parseFloat(r.longitude);
+    placeMarkerAt(currentLat, currentLng, r.coordinateAccuracy || 'manual');
+    setCurrentCoords(currentLat, currentLng, r.coordinateAccuracy || 'manual', true);
+    addressValidated = true;
+    updateAddressLockInfo();
+  }
+}
+
+function deleteRecord(id) {
+  if (!confirm('Delete this address record?')) return;
+  loadRecords();
+  addressRecords = addressRecords.filter(r => r.id !== id);
+  persistRecords();
+  if (currentRecordId === id) {
+    currentRecordId = null;
+    clearAll();
+  }
+  renderRecordsList();
+  toast('Record deleted', 'info');
+}
+
+function newRecord() {
+  currentRecordId = null;
+  clearAll();
+  renderRecordsList();
+  toast('Ready to create a new record', 'info');
+}
+
+// Initialize list on load
+setTimeout(() => renderRecordsList(), 150);
+
+// Records panel toggle and persistence
+function toggleRecordsPanel(btn) {
+  const panel = document.getElementById('records-panel');
+  if (!panel) return;
+  const isOpen = !!panel.open;
+  panel.open = !isOpen;
+  if (btn) btn.setAttribute('aria-expanded', String(!isOpen));
+  try { localStorage.setItem('addresstool_records_panel_open', panel.open ? '1' : '0'); } catch(e) {}
+}
+
+function restoreRecordsPanelState() {
+  try {
+    const v = localStorage.getItem('addresstool_records_panel_open');
+    const panel = document.getElementById('records-panel');
+    const btn = document.getElementById('records-panel-toggle');
+    if (!panel) return;
+    if (v === '0') {
+      panel.open = false;
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    } else {
+      panel.open = true;
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    }
+  } catch(e) { /* ignore */ }
+}
+
+// ensure list renders if something changed after initial load
+renderRecordsList();
+
 
 /* ════════════════════════════════════════════════════════════
    UTILS
@@ -1482,6 +1760,8 @@ window.addEventListener('load', () => {
   initMap();
   updateAdminLabels('NL'); // default
   detectUserCountry();     // async, silently biases search results once resolved
+  // restore UI state
+  restoreRecordsPanelState();
 });
 </script>
 

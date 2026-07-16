@@ -64,7 +64,7 @@
   .breadcrumb-current { color: var(--fab-color-text-default); font-weight: 400; }
 
   /* ─── Page layout ─── */
-  .page { max-width: 1240px; margin: 0 auto; padding: var(--fab-spacing-l) 20px 60px; }
+  .page { margin: 0 auto; padding: var(--fab-spacing-l) 20px 60px; }
 
   .page-header {
     display: flex; align-items: flex-start; justify-content: space-between;
@@ -193,7 +193,7 @@
   .main-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 16px;
     align-items: start;
   }
   @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
@@ -737,3 +737,413 @@
     color: var(--fab-color-text-default);
   }
   .search-info-popover.open { display: block; }
+
+  /* ─── Logo image ─── */
+  .topbar-logo img {
+    height: 28px;
+    width: auto;
+    display: block;
+  }
+
+  /* ─── Inline layout utilities ─── */
+  .layout-flex-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .layout-flex-col-wrap {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .layout-flex-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .layout-grid-cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .layout-relative-flex {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ─── Card & Panel styles ─── */
+  .card-with-bottom-margin {
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .panel-with-top-border {
+    border-top: var(--fab-border-width-xxs) solid var(--fab-color-border-default);
+  }
+
+  /* ─── Map scroll gate keyboard styling ─── */
+  .kbd-overlay-style {
+    font: inherit;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  /* ─── Filter input styling ─── */
+  .filter-input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid var(--fab-color-border-default);
+    border-radius: 6px;
+  }
+
+  /* ─── Records list styling ─── */
+  .records-list {
+    max-height: 220px;
+    overflow: auto;
+    font-size: 13px;
+  }
+
+  /* ─── Color utilities ─── */
+  .text-gray-300 {
+    color: var(--planon-gray-300);
+  }
+  .text-gray-500 {
+    color: var(--planon-gray-500);
+  }
+  .text-gray-700 {
+    color: var(--planon-gray-700);
+  }
+  .text-gray-900 {
+    color: var(--planon-gray-900);
+  }
+  .text-orange {
+    color: var(--planon-orange);
+  }
+  .text-error {
+    color: var(--planon-error);
+  }
+  .text-success {
+    color: var(--planon-success);
+  }
+  .text-warn {
+    color: var(--planon-warn);
+  }
+
+  /* ─── Text styling utilities ─── */
+  .text-sm {
+    font-size: 12px;
+  }
+  .text-sm-lg {
+    font-size: 12.5px;
+  }
+  .text-xs-muted {
+    font-size: 11px;
+    color: var(--planon-gray-500);
+    margin-left: auto;
+  }
+  .text-xs-gray {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--planon-gray-500);
+  }
+  .text-sm-section-label {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--fab-color-text-subdued);
+    letter-spacing: 0;
+  }
+  .text-sm-title {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--planon-gray-700);
+  }
+  .text-result-content {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--planon-gray-700);
+    margin-bottom: 12px;
+  }
+  .text-result-label {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--planon-gray-500);
+  }
+
+  /* ─── Icon emoji styling ─── */
+  .icon-emoji-lg {
+    font-size: 16px;
+  }
+
+  /* ─── Status badge styling ─── */
+  .status-indicator-badge {
+    background: var(--planon-gray-100);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+
+  /* ─── Coordinate value styling ─── */
+  .coord-val-pending {
+    color: var(--planon-orange);
+  }
+
+  /* ─── Table styling ─── */
+  .full-width-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  /* ─── Field styling ─── */
+  .field-uppercase-input {
+    text-transform: uppercase;
+  }
+  .field-margin-bottom-8 {
+    margin-bottom: 8px;
+  }
+  .field-margin-bottom-20 {
+    margin-bottom: 20px;
+  }
+  .field-cols-span-2 {
+    grid-column: span 2;
+  }
+  .field-cols-span-3 {
+    grid-column: span 3;
+  }
+
+  /* ─── Padding utilities ─── */
+  .pad-default {
+    padding: 18px 20px;
+  }
+  .pad-right-border {
+    padding: 18px 20px;
+    border-right: 1px solid var(--planon-gray-100);
+  }
+  .pad-right-top-border {
+    padding: 18px 20px;
+    border-right: 1px solid var(--planon-gray-100);
+    border-top: 1px solid var(--planon-gray-100);
+  }
+  .pad-top-border {
+    padding: 18px 20px;
+    border-top: 1px solid var(--planon-gray-100);
+  }
+
+  /* ─── Row styling (coordinate labels/values) ─── */
+  .coord-label {
+    padding: 3px 0;
+    color: var(--planon-gray-900);
+    font-weight: 500;
+  }
+  .coord-label-spacer {
+    padding: 3px 6px 3px 0;
+    color: var(--planon-gray-500);
+    white-space: nowrap;
+  }
+
+  /* ─── Info box styling ─── */
+  .info-box-padding {
+    color: var(--planon-gray-500);
+    padding: 12px;
+  }
+
+  /* ─── Info banner tag ─── */
+  .info-banner-tag {
+    margin-left: 6px;
+  }
+
+  /* ─── Summary header styling ─── */
+  .summary-flex-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ─── Marker icon styling ─── */
+  .marker-icon {
+    width: 28px;
+    height: 38px;
+    filter: drop-shadow(0 3px 6px rgba(0, 40, 85, 0.4));
+  }
+
+  /* ─── Font weight utilities ─── */
+  .font-weight-600 {
+    font-weight: 600;
+  }
+  .font-weight-600-navy {
+    font-weight: 600;
+    color: var(--planon-navy);
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  /* ─── Inline code styling ─── */
+  /* ─── Emphasis box styling ─── */
+  .emphasis-box {
+    margin-top: 24px;
+    background: var(--planon-white);
+    border: 1px solid var(--planon-gray-300);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+    background: var(--planon-gray-100);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+
+  /* ─── Saved Addresses accessibility & focus styles ─── */
+  #records-list {
+    outline: none;
+  }
+  .record-item {
+    transition: background-color 120ms ease;
+  }
+  .record-item div[role="button"] {
+    cursor: pointer;
+  }
+  .record-item div[role="button"]:focus {
+    outline: 2px solid rgba(0, 123, 255, 0.18);
+    outline-offset: 2px;
+  }
+  .record-item:focus-within {
+    background: var(--planon-gray-100);
+  }
+
+  /* Tighter saved list for better density on narrow viewports */
+  #records-list .record-item {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  /* ─── Layout improvements: 3-column grid with saved list left, map center, form right ─── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr 500px;
+    grid-auto-rows: auto;
+    gap: 20px;
+    align-items: start;
+    margin-top: 12px;
+  }
+  .main-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Place saved addresses panel into left column and make it span rows */
+  #records-panel {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  /* Map in center column, form on right */
+  .main-left {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  /* Right column flows naturally — let card bodies stretch to content and allow page-level scrolling */
+  .main-right {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    padding-right: 6px;
+    overflow: visible;
+  }
+
+  /* Map sizing — keeps a healthy visual weight while staying responsive */
+  .main-left .map-container {
+    height: 520px;
+    min-height: 360px;
+  }
+  .main-left .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .main-left .card .map-container,
+  .main-left .card #map {
+    flex: 1 1 auto;
+    min-height: 360px;
+  }
+
+  .main-right .card {
+    margin-bottom: 12px;
+  }
+
+  /* Sticky actions: keep Save / Clear visible while scrolling the form */
+  .page-actions {
+    position: sticky;
+    top: 8px;
+    z-index: 30;
+    align-self: flex-start;
+  }
+
+  /* Small refinements */
+  .card {
+    box-shadow: none;
+  }
+
+  /* ─── Responsive behaviour ─── */
+  @media (max-width: 1400px) {
+    .main-grid {
+      grid-template-columns: 320px 1fr 420px;
+    }
+    .main-left .map-container {
+      height: 400px;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .main-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .main-left .map-container {
+      height: 400px;
+    }
+    #records-panel {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .main-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    .main-right {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+    }
+    .main-left .map-container {
+      height: 360px;
+    }
+    #records-panel {
+      grid-column: auto;
+      grid-row: auto;
+    }
+    .main-left {
+      grid-column: auto;
+      grid-row: auto;
+    }
+    .main-right {
+      grid-column: auto;
+      grid-row: auto;
+      overflow: visible;
+    }
+    .page-actions {
+      position: static;
+    }
+  }
